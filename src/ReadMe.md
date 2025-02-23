@@ -1,0 +1,1 @@
+Add-Migration AddIdentityTables -Project EcomPlat.Data --startup-project EcomPlat.Data

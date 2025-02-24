@@ -6,14 +6,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
-namespace EcomPlat.Web.Controllers.Admin
+namespace EcomPlat.Web.Areas.Account.Controllers
 {
+    [Area("Account")]
     [Authorize]
-    public class ConfigSettingsController : Controller
+    public class ConfigSettingsManagementController : Controller
     {
         private readonly ApplicationDbContext context;
 
-        public ConfigSettingsController(ApplicationDbContext context)
+        public ConfigSettingsManagementController(ApplicationDbContext context)
         {
             this.context = context;
         }

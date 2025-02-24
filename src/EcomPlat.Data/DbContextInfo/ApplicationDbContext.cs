@@ -106,6 +106,10 @@ namespace EcomPlat.Data.DbContextInfo
                 entity.Property(e => e.PurchaseCost)
                       .HasColumnType("decimal(18,2)");
             });
+
+            modelBuilder.Entity<ProductImage>()
+                        .HasIndex(pi => new { pi.ProductId, pi.DisplayOrder })
+                        .IsUnique();
         }
 
         private void SetDates()

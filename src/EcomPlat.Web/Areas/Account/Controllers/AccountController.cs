@@ -1,12 +1,13 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using EcomPlat.Data.Constants;
+﻿using EcomPlat.Data.Constants;
 using EcomPlat.Data.Models;
 using EcomPlat.Web.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-namespace EcomPlat.Web.Controllers
+namespace EcomPlat.Web.Areas.Account.Controllers
 {
+    [Area("Account")]
     public class AccountController : Controller
     {
         private readonly UserManager<ApplicationUser> userManager;
@@ -50,7 +51,7 @@ namespace EcomPlat.Web.Controllers
 
                 if (result.Succeeded)
                 {
-                    return this.LocalRedirect(returnUrl ?? "/Admin/Index");
+                    return this.LocalRedirect(returnUrl ?? "/account/admin/index");
                 }
 
                 this.ModelState.AddModelError(string.Empty, "Invalid login attempt.");
@@ -78,7 +79,7 @@ namespace EcomPlat.Web.Controllers
             if (this.ModelState.IsValid)
             {
                 // Check if there are zero users in the system
-                bool isFirstUser = (await this.userManager.Users.CountAsync()) == 0;
+                bool isFirstUser = await this.userManager.Users.CountAsync() == 0;
                 var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
                 var result = await this.userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)

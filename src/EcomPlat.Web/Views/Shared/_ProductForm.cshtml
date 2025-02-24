@@ -1,6 +1,10 @@
 ﻿@model EcomPlat.Data.Models.Product
 
+<!-- Render an anti-forgery token here so that it's available on the page -->
+@Html.AntiForgeryToken()
+
 <div asp-validation-summary="All" class="text-danger"></div>
+
 <div class="form-group">
     <label asp-for="Name" class="control-label"></label>
     <input asp-for="Name" class="form-control" />
@@ -71,7 +75,9 @@
     <select asp-for="SubcategoryId" asp-items="this.ViewBag.SubCategoryId" class="form-control"></select>
     <span asp-validation-for="SubcategoryId" class="text-danger"></span>
 </div>
+
+<!-- File upload for new images -->
 <div class="form-group">
-    <label class="control-label">Product Images</label>
+    <label class="control-label">Upload New Images</label>
     <input type="file" name="ProductImages" class="form-control" multiple />
 </div>

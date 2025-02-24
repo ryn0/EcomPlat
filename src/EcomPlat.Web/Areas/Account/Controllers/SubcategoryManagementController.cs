@@ -6,14 +6,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
-namespace EcomPlat.Web.Controllers.Admin
+namespace EcomPlat.Web.Areas.Account.Controllers
 {
+    [Area("Account")]
     [Authorize]
-    public class SubcategoryController : Controller
+    public class SubcategoryManagementController : Controller
     {
         private readonly ApplicationDbContext context;
 
-        public SubcategoryController(ApplicationDbContext context)
+        public SubcategoryManagementController(ApplicationDbContext context)
         {
             this.context = context;
         }

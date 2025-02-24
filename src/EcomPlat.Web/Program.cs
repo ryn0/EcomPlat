@@ -1,19 +1,14 @@
 using EcomPlat.Data.DbContextInfo;
-using EcomPlat.Data.Models;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+using EcomPlat.Web.Extensions;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure EF Core with your connection string (from appsettings.json in your startup project)
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
-
-builder.Services.AddControllersWithViews();
+// Remove duplicate registrations here; use the extension method for most services.
+builder.Services.AddApplicationServices(builder.Configuration);
 
 var app = builder.Build();
 

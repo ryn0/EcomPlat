@@ -1,0 +1,36 @@
+﻿@model IEnumerable<EcomPlat.Data.Models.ConfigSetting>
+
+@{
+    this.ViewData["Title"] = "Manage Config Settings";
+}
+
+<h2>@this.ViewData["Title"]</h2>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Add New Config Setting</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Site Config Setting</th>
+            <th>Content</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var setting in this.Model)
+        {
+            <tr>
+                <td>@setting.ConfigSettingId</td>
+                <td>@setting.SiteConfigSetting</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@setting.ConfigSettingId" class="btn btn-sm btn-warning">Edit</a>
+                    <a asp-action="Details" asp-route-id="@setting.ConfigSettingId" class="btn btn-sm btn-info">Details</a>
+                    <a asp-action="Delete" asp-route-id="@setting.ConfigSettingId" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

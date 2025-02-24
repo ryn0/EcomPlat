@@ -1,10 +1,10 @@
 ﻿@{
-    ViewData["Title"] = "Product Management Dashboard";
+    this.ViewData["Title"] = "Product Management Dashboard";
 }
 
-<h2>@ViewData["Title"]</h2>
+<h2>@this.ViewData["Title"]</h2>
 <p>
-    Welcome, @User.Identity.Name. Use the navigation menu below to manage products, orders, settings, categories, and subcategories.
+    Welcome, @this.User.Identity.Name. Use the navigation menu below to manage products, orders, settings, categories, and subcategories.
 </p>
 
 <ul>
@@ -34,7 +34,7 @@
         </a>
     </li>
     <li>
-        <a asp-area="Admin" asp-controller="Config" asp-action="Index">
+        <a asp-area="Admin" asp-controller="ConfigSettings" asp-action="Index">
             Site Settings
         </a>
     </li>

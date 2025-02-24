@@ -71,3 +71,7 @@
     <select asp-for="SubcategoryId" asp-items="this.ViewBag.SubCategoryId" class="form-control"></select>
     <span asp-validation-for="SubcategoryId" class="text-danger"></span>
 </div>
+<div class="form-group">
+    <label class="control-label">Product Images</label>
+    <input type="file" name="ProductImages" class="form-control" multiple />
+</div>

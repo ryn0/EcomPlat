@@ -16,6 +16,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{BBC17F42
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcomPlat.Utilities.Tests", "EcomPlat.Utilities.Tests\EcomPlat.Utilities.Tests.csproj", "{C3AF8B68-8877-4E0C-8D8B-51A9D87D8E33}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcomPlat.Web", "EcomPlat.Web\EcomPlat.Web.csproj", "{1F17B7EE-5813-45F9-A790-E25F64C67386}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,6 +36,10 @@ Global
 		{C3AF8B68-8877-4E0C-8D8B-51A9D87D8E33}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C3AF8B68-8877-4E0C-8D8B-51A9D87D8E33}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C3AF8B68-8877-4E0C-8D8B-51A9D87D8E33}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F17B7EE-5813-45F9-A790-E25F64C67386}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F17B7EE-5813-45F9-A790-E25F64C67386}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F17B7EE-5813-45F9-A790-E25F64C67386}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F17B7EE-5813-45F9-A790-E25F64C67386}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

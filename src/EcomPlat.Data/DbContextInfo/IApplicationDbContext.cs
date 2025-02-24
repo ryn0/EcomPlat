@@ -5,8 +5,20 @@ namespace EcomPlat.Data.DbContextInfo
 {
     public interface IApplicationDbContext : IDisposable
     {
-        public DbSet<ApplicationUser> ApplicationUser { get; set; }
-        public DbSet<ApplicationUserRole> ApplicationUserRole { get; set; }
+        DbSet<ApplicationUser> ApplicationUser { get; set; }
+        DbSet<ApplicationUserRole> ApplicationUserRole { get; set; }
+        DbSet<Category> Categories { get; set; }
+        DbSet<ConfigSetting> ConfigSettings { get; set; }
+        DbSet<OrderAddress> OrderAddresses { get; set; }
+        DbSet<OrderItem> OrderItems { get; set; }
+        DbSet<Order> Orders { get; set; }
+        DbSet<ProductImage> ProductImages { get; set; }
+        DbSet<ProductInventory> ProductInventories { get; set; }
+        DbSet<Product> Products { get; set; }
+        DbSet<ShoppingCartItem> ShoppingCartItems { get; set; }
+        DbSet<ShoppingCart> ShoppingCarts { get; set; }
+        DbSet<Subcategory> Subcategories { get; set; }
+        DbSet<Supplier> Suppliers { get; set; }
 
         int SaveChanges();
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

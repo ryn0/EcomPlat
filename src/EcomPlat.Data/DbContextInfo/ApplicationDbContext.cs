@@ -11,8 +11,20 @@ namespace EcomPlat.Data.DbContextInfo
         {
         }
 
-        public DbSet<ApplicationUser> ApplicationUser { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public DbSet<ApplicationUserRole> ApplicationUserRole { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public DbSet<ApplicationUser> ApplicationUser { get; set;  }
+        public DbSet<ApplicationUserRole> ApplicationUserRole { get; set;  }
+        public DbSet<Category> Categories { get; set;  }
+        public DbSet<ConfigSetting> ConfigSettings { get; set;  }
+        public DbSet<OrderAddress> OrderAddresses { get; set;  }
+        public DbSet<OrderItem> OrderItems { get; set;  }
+        public DbSet<Order> Orders { get; set;  }
+        public DbSet<ProductImage> ProductImages { get; set;  }
+        public DbSet<ProductInventory> ProductInventories { get; set;  }
+        public DbSet<Product> Products { get; set;  }
+        public DbSet<ShoppingCartItem> ShoppingCartItems { get; set;  }
+        public DbSet<ShoppingCart> ShoppingCarts { get; set;  }
+        public DbSet<Subcategory> Subcategories { get; set;  }
+        public DbSet<Supplier> Suppliers { get; set;  }
 
         public override int SaveChanges()
         {
@@ -29,10 +41,71 @@ namespace EcomPlat.Data.DbContextInfo
             return base.SaveChangesAsync(cancellationToken);
         }
 
-        protected override void OnModelCreating(ModelBuilder builder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(builder);
+            base.OnModelCreating(modelBuilder);
 
+            // Configure the relationship between Product and Subcategory.
+            modelBuilder.Entity<Product>()
+                .HasOne(p => p.SubCategory)
+                .WithMany(s => s.Products)
+                .HasForeignKey(p => p.SubCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Order decimal properties
+            modelBuilder.Entity<Order>(entity =>
+            {
+                entity.Property(e => e.OrderTotal)
+                      .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.SalePrice)
+                      .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.ShippingAmount)
+                      .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.ShippingWeightOunces)
+                      .HasColumnType("decimal(18,2)");
+            });
+
+            // OrderItem decimal properties
+            modelBuilder.Entity<OrderItem>(entity =>
+            {
+                entity.Property(e => e.UnitPrice)
+                      .HasColumnType("decimal(18,2)");
+            });
+
+            // Product decimal properties
+            modelBuilder.Entity<Product>(entity =>
+            {
+                entity.Property(e => e.Price)
+                      .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.SalePrice)
+                      .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.ProductWeightOunces)
+                      .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.ShippingWeightOunces)
+                      .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.HeightInches)
+                      .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.WidthInches)
+                      .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.LengthInches)
+                      .HasColumnType("decimal(18,2)");
+            });
+
+            // ProductInventory decimal properties
+            modelBuilder.Entity<ProductInventory>(entity =>
+            {
+                entity.Property(e => e.PurchaseCost)
+                      .HasColumnType("decimal(18,2)");
+            });
         }
 
         private void SetDates()

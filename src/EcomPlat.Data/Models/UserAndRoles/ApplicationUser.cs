@@ -1,10 +1,26 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System.ComponentModel.DataAnnotations;
+using EcomPlat.Data.Models.BaseModels;
 
 namespace EcomPlat.Data.Models
 {
-    public class ApplicationUser : IdentityUser
+    public class ApplicationUser : ApplicationUserStateInfo
     {
-        // Add additional properties if needed, for example:
-        // public string FullName { get; set; }
+        public ApplicationUser()
+        {
+        }
+
+        [StringLength(36)]
+        public override string Id
+        {
+            get
+            {
+                return base.Id;
+            }
+
+            set
+            {
+                base.Id = value;
+            }
+        }
     }
 }

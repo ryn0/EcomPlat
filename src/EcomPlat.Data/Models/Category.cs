@@ -1,15 +1,21 @@
-﻿// File: Category.cs
-using System.Collections.Generic;
+﻿using System.ComponentModel.DataAnnotations;
+using EcomPlat.Data.Models.BaseModels;
 
 namespace EcomPlat.Data.Models
 {
-    public class Category
+    public class Category : UserStateInfo
     {
-        public int Id { get; set; }
+        public int CategoryId { get; set; }
+
+        [Required]
+        [MaxLength(100)]
         public string Name { get; set; }
-        public string UrlKey { get; set; } // Used for product URLs
+
+        [Required]
+        [MaxLength(100)]
+        public string CategoryKey { get; set; }
 
         // Navigation property to subcategories
-        public ICollection<SubCategory> SubCategories { get; set; } = new List<SubCategory>();
+        public ICollection<Subcategory> SubCategories { get; set; } = new List<Subcategory>();
     }
 }

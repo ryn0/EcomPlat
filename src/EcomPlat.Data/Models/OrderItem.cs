@@ -1,9 +1,10 @@
-﻿// File: OrderItem.cs
+﻿using EcomPlat.Data.Models.BaseModels;
+
 namespace EcomPlat.Data.Models
 {
-    public class OrderItem
+    public class OrderItem : UserStateInfo
     {
-        public int Id { get; set; }
+        public int OrderItemId { get; set; }
 
         // Quantity of the product ordered
         public int Quantity { get; set; }

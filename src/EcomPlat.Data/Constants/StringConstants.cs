@@ -6,5 +6,6 @@
         public const string ConnectionStringLocation = "ConnectionStrings:DefaultConnection";
         public const string DefaultConnection = "DefaultConnection";
         public const string AppSettingsFileName = "appsettings.json";
+        public const string Administrator = "Administrator";
     }
 }

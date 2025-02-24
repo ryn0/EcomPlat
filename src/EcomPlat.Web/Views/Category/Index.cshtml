@@ -1,0 +1,35 @@
+﻿@model IEnumerable<EcomPlat.Data.Models.Category>
+
+@{
+    this.ViewData["Title"] = "Manage Categories";
+}
+
+<h2>@this.ViewData["Title"]</h2>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Add New Category</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>UrlKey</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var category in this.Model)
+        {
+            <tr>
+                <td>@category.Name</td>
+                <td>@category.CategoryKey</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@category.CategoryId" class="btn btn-sm btn-warning">Edit</a>
+                    <a asp-action="Details" asp-route-id="@category.CategoryId" class="btn btn-sm btn-info">Details</a>
+                    <a asp-action="Delete" asp-route-id="@category.CategoryId" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

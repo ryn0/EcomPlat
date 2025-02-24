@@ -1,0 +1,47 @@
+﻿@model EcomPlat.Data.Models.ProductInventory
+
+@{
+    ViewData["Title"] = "Add Inventory Record";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form asp-action="Create" method="post">
+    <div class="form-group">
+        <label asp-for="ProductId" class="control-label"></label>
+        <select asp-for="ProductId" asp-items="ViewBag.ProductId" class="form-control"></select>
+        <span asp-validation-for="ProductId" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="SupplierId" class="control-label"></label>
+        <select asp-for="SupplierId" asp-items="ViewBag.SupplierId" class="form-control"></select>
+        <span asp-validation-for="SupplierId" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="PurchaseCost" class="control-label"></label>
+        <input asp-for="PurchaseCost" class="form-control" />
+        <span asp-validation-for="PurchaseCost" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Quantity" class="control-label"></label>
+        <input asp-for="Quantity" class="form-control" />
+        <span asp-validation-for="Quantity" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="PurchaseDate" class="control-label"></label>
+        <input asp-for="PurchaseDate" class="form-control" type="date" />
+        <span asp-validation-for="PurchaseDate" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="ExpirationDateUtc" class="control-label"></label>
+        <input asp-for="ExpirationDateUtc" class="form-control" type="date" />
+        <span asp-validation-for="ExpirationDateUtc" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Create</button>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,41 @@
+﻿@{
+    ViewData["Title"] = "Product Management Dashboard";
+}
+
+<h2>@ViewData["Title"]</h2>
+<p>
+    Welcome, @User.Identity.Name. Use the navigation menu below to manage products, orders, settings, categories, and subcategories.
+</p>
+
+<ul>
+    <li>
+        <a asp-area="Admin" asp-controller="Inventory" asp-action="Index">
+            Manage Inventory
+        </a>
+    </li>
+    <li>
+        <a asp-area="Admin" asp-controller="Products" asp-action="Index">
+            Manage Products
+        </a>
+    </li>
+    <li>
+        <a asp-area="Admin" asp-controller="Category" asp-action="Index">
+            Manage Categories
+        </a>
+    </li>
+    <li>
+        <a asp-area="Admin" asp-controller="Subcategory" asp-action="Index">
+            Manage Subcategories
+        </a>
+    </li>
+    <li>
+        <a asp-area="Admin" asp-controller="Orders" asp-action="Index">
+            Manage Orders
+        </a>
+    </li>
+    <li>
+        <a asp-area="Admin" asp-controller="Config" asp-action="Index">
+            Site Settings
+        </a>
+    </li>
+</ul>

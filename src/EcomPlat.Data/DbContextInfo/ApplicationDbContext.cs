@@ -47,9 +47,9 @@ namespace EcomPlat.Data.DbContextInfo
 
             // Configure the relationship between Product and Subcategory.
             modelBuilder.Entity<Product>()
-                .HasOne(p => p.SubCategory)
+                .HasOne(p => p.Subcategory)
                 .WithMany(s => s.Products)
-                .HasForeignKey(p => p.SubCategoryId)
+                .HasForeignKey(p => p.SubcategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Order decimal properties
@@ -85,19 +85,19 @@ namespace EcomPlat.Data.DbContextInfo
                       .HasColumnType("decimal(18,2)");
 
                 entity.Property(e => e.ProductWeightOunces)
-                      .HasColumnType("decimal(18,2)");
+                      .HasColumnType("decimal(28,8)");
 
                 entity.Property(e => e.ShippingWeightOunces)
-                      .HasColumnType("decimal(18,2)");
+                      .HasColumnType("decimal(28,8)");
 
                 entity.Property(e => e.HeightInches)
-                      .HasColumnType("decimal(18,2)");
+                      .HasColumnType("decimal(28,8)");
 
                 entity.Property(e => e.WidthInches)
-                      .HasColumnType("decimal(18,2)");
+                      .HasColumnType("decimal(28,8)");
 
                 entity.Property(e => e.LengthInches)
-                      .HasColumnType("decimal(18,2)");
+                      .HasColumnType("decimal(28,8)");
             });
 
             // ProductInventory decimal properties

@@ -1,0 +1,44 @@
+﻿@model IEnumerable<EcomPlat.Data.Models.Product>
+
+@{
+    this.ViewData["Title"] = "Manage Products";
+}
+
+<h2>@this.ViewData["Title"]</h2>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Add New Product</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>SKU</th>
+            <th>Price</th>
+            <th>Sale Price</th>
+            <th>Available</th>
+            <th>Category</th>
+            <th>Subcategory</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var product in this.Model)
+        {
+            <tr>
+                <td>@product.Name</td>
+                <td>@product.Sku</td>
+                <td>@product.Price.ToString("C")</td>
+                <td>@(product.SalePrice.HasValue ? product.SalePrice.Value.ToString("C") : "-")</td>
+                <td>@(product.IsAvailable ? "Yes" : "No")</td>
+                <td>@product.Subcategory?.Name</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@product.ProductId" class="btn btn-sm btn-warning">Edit</a>
+                    <a asp-action="Details" asp-route-id="@product.ProductId" class="btn btn-sm btn-info">Details</a>
+                    <a asp-action="Delete" asp-route-id="@product.ProductId" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

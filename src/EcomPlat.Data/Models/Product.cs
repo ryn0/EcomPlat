@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using EcomPlat.Data.Enums;
 using EcomPlat.Data.Models.BaseModels;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace EcomPlat.Data.Models
 {
@@ -93,16 +94,12 @@ namespace EcomPlat.Data.Models
         public int StockQuantity { get; set; }
 
         /// <summary>
-        /// Gets or sets the category identifier.
-        /// </summary>
-        public int CategoryId { get; set; }
-        public Category Category { get; set; }
-
-        /// <summary>
         /// Gets or sets the subcategory identifier.
         /// </summary>
-        public int SubCategoryId { get; set; }
-        public Subcategory SubCategory { get; set; }
+        public int SubcategoryId { get; set; }
+
+        [ValidateNever]
+        public Subcategory Subcategory { get; set; }
 
         /// <summary>
         /// Gets or sets the collection of images associated with the product.

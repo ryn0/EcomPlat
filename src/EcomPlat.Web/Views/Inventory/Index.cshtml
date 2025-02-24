@@ -1,0 +1,44 @@
+﻿@using EcomPlat.Web.Constants
+@model IEnumerable<EcomPlat.Data.Models.ProductInventory>
+
+@{
+    ViewData["Title"] = "Product Inventory Management";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Add New Inventory Record</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Supplier</th>
+            <th>Purchase Cost</th>
+            <th>Quantity</th>
+            <th>Effective Date</th>
+            <th>Expiration Date</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Product?.Name</td>
+                <td>@item.Supplier?.Name</td>
+                <td>@item.PurchaseCost.ToString(StringConstants.CurrencyFormat)</td>
+                <td>@item.Quantity</td>
+                <td>@item.PurchaseDate.ToString(StringConstants.DateFormat)</td>
+                <td>@item.ExpirationDateUtc.ToString(StringConstants.DateFormat)</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.ProductInventoryId" class="btn btn-sm btn-warning">Edit</a>
+                    <a asp-action="Details" asp-route-id="@item.ProductInventoryId" class="btn btn-sm btn-info">Details</a>
+                    <a asp-action="Delete" asp-route-id="@item.ProductInventoryId" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

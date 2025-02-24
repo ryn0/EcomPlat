@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using EcomPlat.Data.Models.BaseModels;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace EcomPlat.Data.Models
 {
@@ -17,6 +18,8 @@ namespace EcomPlat.Data.Models
 
         // Foreign key to the parent category
         public int CategoryId { get; set; }
+
+        [ValidateNever]
         public Category Category { get; set; }
 
         // Navigation property to products

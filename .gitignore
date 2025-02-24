@@ -109,3 +109,5 @@ rcf/
 /src/DirectoryManager/DirectoryManager.SponsoredListingOpening/appsettings.json
 /src/DirectoryManager/DirectoryManager.NewsletterSender/appsettings.json
 /src/DirectoryManager/DirectoryManager.EmailMessageMaker/appsettings.json
+/src/EcomPlat.Web/appsettings.json
+/src/EcomPlat.Data/appsettings.json

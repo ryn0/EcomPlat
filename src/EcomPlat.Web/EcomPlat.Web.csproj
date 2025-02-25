@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -32,6 +32,16 @@
 
 	<ItemGroup>
 		<AdditionalFiles Include="..\stylecop.json" />
+	</ItemGroup>
+ 
+	<ItemGroup>
+		<!-- Stop including these in the final publish output -->
+		<None Update="appsettings.json">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</None>
+		<None Update="appsettings.Development.json">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 
 </Project>

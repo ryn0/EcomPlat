@@ -52,6 +52,7 @@ function Set-FileSettings($fileLocation)
     $envJson = Get-Content $fileLocation | ConvertFrom-Json
 
     $envJson.ConnectionStrings.DefaultConnection = $dbConnectionString
+
     $envJson | ConvertTo-Json -Depth 10 | set-content $fileLocation
 
     Write-Host "Saving $fileLocation..."
@@ -70,9 +71,6 @@ function Set-LoggingSettings($fileLocation)
 
     # Write the updated JSON back to appsettings.json
     $newJson | Set-Content $fileLocation
-
-
-
 }
 
 function Retry-Command {

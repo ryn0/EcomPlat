@@ -36,12 +36,20 @@
 	<ItemGroup>
 		<AdditionalFiles Include="..\stylecop.json" />
 	</ItemGroup>
+	<ItemGroup>
+		<Content Include="appsettings.Development.json">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+			<CopyToPublishDirectory>Never</CopyToPublishDirectory>
+		</Content>
+	</ItemGroup>
 
 	<ItemGroup>
-	  <Content Include="appsettings.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	    <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-	    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-	  </Content>
+		<None Update="appsettings.json">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+			<CopyToPublishDirectory>Never</CopyToPublishDirectory>
+		</None>
 	</ItemGroup>
+
 </Project>

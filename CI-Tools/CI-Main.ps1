@@ -22,13 +22,13 @@ properties {
    $msDeploy                    = "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"    
    
    # Project paths
-   $databaseProjectSourcePath   = "..\src\EcomPlat\EcomPlat.Data"
-   $webProjectSourcePath        = "..\src\EcomPlat\EcomPlat.Web"
+   $databaseProjectSourcePath   = "..\src\EcomPlat.Data"
+   $webProjectSourcePath        = "..\src\EcomPlat.Web"
    $testProjectSourcePath       = "..\EcomPlat.sln"
-   $compileSourcePath           = "..\src\EcomPlat\EcomPlat.Web\bin\output"
+   $compileSourcePath           = "..\src\EcomPlat.Web\bin\output"
 
-   $WebAppSettings              = "..\src\EcomPlat\EcomPlat.Web\appsettings.json"
-   $DatabaseAppSettings         = "..\src\EcomPlat\EcomPlat.Data\appsettings.json"
+   $WebAppSettings              = "..\src\EcomPlat.Web\appsettings.json"
+   $DatabaseAppSettings         = "..\src\EcomPlat.Data\appsettings.json"
 
    # Credentials
    $MsDeployLocation            = ""
@@ -126,11 +126,12 @@ task -name RunUnitTests {
 
 task -name SetConfigs {
 
-    $WebAppSettings = "..\src\DirectoryManager\DirectoryManager.Web\appsettings.json"
+    $WebAppSettings = "..\src\EcomPlat.Web\appsettings.json"
+
     Set-FileSettings -fileLocation $WebAppSettings
     Set-LoggingSettings($WebAppSettings)
 
-    $DatabaseAppSettings = "..\src\DirectoryManager\DirectoryManager.Data\appsettings.json"
+    $DatabaseAppSettings = "..\src\EcomPlat.Data\appsettings.json"
     Set-FileSettings -fileLocation $DatabaseAppSettings
 }
 

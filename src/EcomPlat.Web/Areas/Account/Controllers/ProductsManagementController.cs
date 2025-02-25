@@ -1,16 +1,18 @@
 ﻿using EcomPlat.Data.DbContextInfo;
+using EcomPlat.Data.Enums;
 using EcomPlat.Data.Models;
 using EcomPlat.FileStorage.Repositories.Interfaces;
 using EcomPlat.Utilities.Helpers;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 
 namespace EcomPlat.Web.Areas.Account.Controllers
 {
-    [Area("Account")]
+    [Area(Constants.StringConstants.AccountArea)]
     [Authorize]
     public class ProductsManagementController : Controller
     {
@@ -70,6 +72,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 await this.ProcessProductImageUploads(product, ProductImages);
                 return this.RedirectToAction(nameof(this.Index));
             }
+
             await this.PopulateSubcategoryDropDownList(product.SubcategoryId);
             return this.View(product);
         }
@@ -80,6 +83,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
+
             var product = await this.context.Products
                 .Include(p => p.Images)
                 .FirstOrDefaultAsync(p => p.ProductId == id);
@@ -87,6 +91,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
+
             await this.PopulateSubcategoryDropDownList(product.SubcategoryId);
             return this.View(product);
         }
@@ -99,6 +104,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
+
             if (this.ModelState.IsValid)
             {
                 try
@@ -119,8 +125,10 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                         throw;
                     }
                 }
+
                 return this.RedirectToAction(nameof(this.Index));
             }
+
             await this.PopulateSubcategoryDropDownList(product.SubcategoryId);
             return this.View(product);
         }
@@ -131,6 +139,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
+
             var product = await this.context.Products
                 .Include(p => p.Subcategory)
                     .ThenInclude(s => s.Category)
@@ -190,12 +199,10 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         }
 
         /// <summary>
-        /// Processes file uploads for a product and adds corresponding ProductImage records.
-        /// Files are uploaded to the path: /products/{ProductId}/{filename}_{ImageSize}{extension}
-        /// and a sequential DisplayOrder is assigned.
+        /// Processes all file uploads for a product, creating versions in different sizes.
         /// </summary>
         /// <param name="product">The product to associate images with.</param>
-        /// <param name="productImages">The collection of files to upload.</param>
+        /// <param name="productImages">The collection of uploaded files.</param>
         private async Task ProcessProductImageUploads(Product product, IFormFileCollection productImages)
         {
             if (productImages == null || productImages.Count == 0)
@@ -203,51 +210,130 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 return;
             }
 
-            // Determine the current maximum display order for this product.
-            int currentMaxOrder = 0;
-            if (product.Images != null && product.Images.Any())
-            {
-                currentMaxOrder = product.Images.Max(i => i.DisplayOrder);
-            }
-            else
-            {
-                // Optionally, check the database in case Images are not loaded.
-                var existingImages = await this.context.ProductImages
-                    .Where(pi => pi.ProductId == product.ProductId)
-                    .ToListAsync();
-                if (existingImages.Any())
-                {
-                    currentMaxOrder = existingImages.Max(pi => pi.DisplayOrder);
-                }
-            }
+            // Determine current maximum display order for this product.
+            int currentMaxOrder = await this.GetCurrentMaxDisplayOrder(product.ProductId);
+
+            // Define sizes to process (excluding Unknown).
+            var sizes = new[] { ImageSize.Small, ImageSize.Medium, ImageSize.Large, ImageSize.Raw };
+
+            // Directory for uploads: /products/{ProductId}/
+            string directory = $"products/{product.ProductId}/";
 
             foreach (var file in productImages)
             {
                 if (file != null && file.Length > 0)
                 {
-                    var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file.FileName);
-                    var extension = Path.GetExtension(file.FileName);
-                    var sizeString = Data.Enums.ImageSize.Medium.ToString();
-                    var finalFileName = $"{fileNameWithoutExtension}_{sizeString}{extension}";
-                    var directory = $"products/{product.ProductId}/";
-
-                    var imageUri = await this.siteFilesRepository.UploadAsync(file.OpenReadStream(), finalFileName, directory);
-                    // Increment the display order
-                    currentMaxOrder++;
-                    var productImage = new ProductImage
+                    foreach (var size in sizes)
                     {
-                        ImageUrl = imageUri.ToString(),
-                        Size = Data.Enums.ImageSize.Medium,
-                        IsMain = false,
-                        ProductId = product.ProductId,
-                        DisplayOrder = currentMaxOrder
-                    };
-
-                    product.Images.Add(productImage);
+                        // Process the file for a given size.
+                        currentMaxOrder++;
+                        var productImage = await this.ProcessFileUploadForSize(product, file, size, directory, currentMaxOrder);
+                        product.Images.Add(productImage);
+                    }
                 }
             }
-
             await this.context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Returns the current maximum DisplayOrder for a given product.
+        /// </summary>
+        /// <param name="productId">The product id.</param>
+        /// <returns>An integer representing the current maximum display order.</returns>
+        private async Task<int> GetCurrentMaxDisplayOrder(int productId)
+        {
+            int currentMaxOrder = 0;
+            // Check images already loaded in the product.
+            if (this.context.Products.Any(p => p.ProductId == productId))
+            {
+                var images = await this.context.ProductImages.Where(pi => pi.ProductId == productId).ToListAsync();
+                if (images.Any())
+                {
+                    currentMaxOrder = images.Max(pi => pi.DisplayOrder);
+                }
+            }
+            return currentMaxOrder;
+        }
+
+        /// <summary>
+        /// Processes an individual file upload for a given image size.
+        /// Resizes the image (if needed), uploads it, and returns a new ProductImage record.
+        /// </summary>
+        /// <param name="product">The product associated with the image.</param>
+        /// <param name="file">The uploaded file.</param>
+        /// <param name="size">The desired ImageSize.</param>
+        /// <param name="directory">The directory path where the image will be stored.</param>
+        /// <param name="displayOrder">The sequential display order for this image.</param>
+        /// <returns>A new ProductImage record.</returns>
+        private async Task<ProductImage> ProcessFileUploadForSize(Product product, IFormFile file, ImageSize size, string directory, int displayOrder)
+        {
+            // Get file name and extension.
+            var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file.FileName);
+            var extension = Path.GetExtension(file.FileName);
+            string finalFileName;
+            MemoryStream uploadStream;
+
+            if (size == ImageSize.Raw)
+            {
+                // For Raw, use the file as-is.
+                finalFileName = $"{fileNameWithoutExtension}_{size}{extension}";
+                uploadStream = new MemoryStream();
+                await file.CopyToAsync(uploadStream);
+                uploadStream.Position = 0;
+            }
+            else
+            {
+                // Resize image based on the size.
+                finalFileName = $"{fileNameWithoutExtension}_{size}{extension}".ToLower();
+                uploadStream = await this.ResizeImageAsync(file, size);
+            }
+
+            // Upload the file.
+            var imageUri = await this.siteFilesRepository.UploadAsync(uploadStream, finalFileName, directory);
+            uploadStream.Dispose();
+
+            return new ProductImage
+            {
+                ImageUrl = imageUri.ToString(),
+                Size = size,
+                IsMain = false,
+                ProductId = product.ProductId,
+                DisplayOrder = displayOrder
+            };
+        }
+
+        /// <summary>
+        /// Resizes the uploaded file to a specific size.
+        /// </summary>
+        /// <param name="file">The uploaded IFormFile.</param>
+        /// <param name="size">The target ImageSize (Small, Medium, or Large).</param>
+        /// <returns>A MemoryStream containing the resized image.</returns>
+        private async Task<MemoryStream> ResizeImageAsync(IFormFile file, ImageSize size)
+        {
+            int maxDimension = size switch
+            {
+                ImageSize.Small => 100,
+                ImageSize.Medium => 300,
+                ImageSize.Large => 800,
+                _ => throw new System.ArgumentException("Invalid size for resizing", nameof(size))
+            };
+
+            using var originalMs = new MemoryStream();
+            await file.CopyToAsync(originalMs);
+            originalMs.Position = 0;
+
+            using var image = SixLabors.ImageSharp.Image.Load(originalMs);
+            var resizeOptions = new ResizeOptions
+            {
+                Mode = ResizeMode.Max,
+                Size = new Size(maxDimension, maxDimension)
+            };
+            image.Mutate(x => x.Resize(resizeOptions));
+
+            var resizedStream = new MemoryStream();
+            await image.SaveAsJpegAsync(resizedStream);
+            resizedStream.Position = 0;
+            return resizedStream;
         }
     }
 }

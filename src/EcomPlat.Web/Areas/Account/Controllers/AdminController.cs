@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace EcomPlat.Web.Areas.Account.Controllers
 {
     [Authorize]
-    [Area("Account")]
+    [Area(Constants.StringConstants.AccountArea)]
     public class AdminController : Controller
     {
         // The Index view below serves as the landing page for product management.

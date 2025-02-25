@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EcomPlat.Web.Areas.Account.Controllers
 {
-    [Area("Account")]
+    [Area(Constants.StringConstants.AccountArea)]
     [Authorize]
     public class InventoryManagementController : Controller
     {

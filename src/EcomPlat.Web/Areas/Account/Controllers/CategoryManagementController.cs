@@ -1,13 +1,14 @@
 ﻿using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Models;
 using EcomPlat.Utilities.Helpers;
+using EcomPlat.Web.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace EcomPlat.Web.Areas.Account.Controllers
 {
-    [Area("Account")]
+    [Area(StringConstants.AccountArea)]
     [Authorize]
     public class CategoryManagementController : Controller
     {

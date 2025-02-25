@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EcomPlat.Web.Areas.Account.Controllers
 {
-    [Area("Account")]
+    [Area(Constants.StringConstants.AccountArea)]
     public class AccountController : Controller
     {
         private readonly UserManager<ApplicationUser> userManager;

@@ -67,6 +67,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         {
             await this.PopulateSubcategoryDropDownList();
             await this.PopulateCompanyDropDownList();
+            await this.PopulateCountryDropDownList();
             return this.View();
         }
 
@@ -106,8 +107,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 return this.NotFound();
             }
 
-            await this.PopulateSubcategoryDropDownList(product.SubcategoryId);
-            await this.PopulateCompanyDropDownList(product.CompanyId);
+            await this.PopulateDropDowns(product);
             return this.View(product);
         }
 
@@ -145,10 +145,26 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 return this.RedirectToAction(nameof(this.Index));
             }
 
-            await this.PopulateSubcategoryDropDownList(product.SubcategoryId);
-            await this.PopulateCompanyDropDownList(product.CompanyId);
+            await this.PopulateDropDowns(product);
             return this.View(product);
         }
+
+        private async Task PopulateDropDowns(Product product)
+        {
+            await this.PopulateSubcategoryDropDownList(product.SubcategoryId);
+            await this.PopulateCompanyDropDownList(product.CompanyId);
+            await this.PopulateCountryDropDownList(product.CountryOfOrigin);
+        }
+
+        private async Task PopulateCountryDropDownList(object selectedId = null)
+        {
+            // Get the dictionary of countries from the helper.
+            var countries = CountryHelper.GetCountries();
+            // Create a SelectList from the dictionary.
+            this.ViewBag.CountryOrigin = new SelectList(countries, "Key", "Value", selectedId);
+            await Task.CompletedTask; // For async signature compliance.
+        }
+
 
         public async Task<IActionResult> Delete(int? id)
         {

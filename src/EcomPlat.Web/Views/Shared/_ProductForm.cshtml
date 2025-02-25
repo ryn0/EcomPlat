@@ -95,6 +95,14 @@
     <span asp-validation-for="CompanyId" class="text-danger"></span>
 </div>
 
+<!-- Country of Origin dropdown -->
+<div class="form-group">
+    <label asp-for="CountryOfOrigin" class="control-label"></label>
+    <select asp-for="CountryOfOrigin" asp-items="ViewBag.CountryOrigin" class="form-control"></select>
+    <span asp-validation-for="CountryOfOrigin" class="text-danger"></span>
+</div>
+
+
 <!-- File upload for new images -->
 <div class="form-group">
     <label class="control-label">Upload New Images</label>

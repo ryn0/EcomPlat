@@ -107,6 +107,12 @@ namespace EcomPlat.Data.Models
         public int CompanyId { get; set; }
 
         /// <summary>
+        /// The two-letter ISO country code representing the country of origin.
+        /// </summary>
+        [MaxLength(2)]
+        public string CountryOfOrigin { get; set; }
+
+        /// <summary>
         /// Navigation property for the source company.
         /// </summary>
         [ValidateNever]

@@ -66,45 +66,5 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             return this.View("DetailsByKey", product);
         }
 
-        [HttpPost]
-        public async Task<JsonResult> SetMainImageAjax(int imageId, string productKey)
-        {
-            // Find the chosen image.
-            var chosenImage = await this.context.ProductImages
-                .FirstOrDefaultAsync(pi => pi.ProductImageId == imageId);
-            if (chosenImage == null)
-            {
-                return this.Json(new { success = false, message = "Image not found." });
-            }
-
-            // Find the product using productKey.
-            var product = await this.context.Products
-                .Include(p => p.Images)
-                .FirstOrDefaultAsync(p => p.ProductKey == productKey);
-            if (product == null)
-            {
-                return this.Json(new { success = false, message = "Product not found." });
-            }
-
-            // Unmark all images for the product.
-            foreach (var img in product.Images)
-            {
-                img.IsMain = false;
-            }
-            // Mark all variants in the chosen image's group as main.
-            var chosenGroupGuid = chosenImage.ImageGroupGuid;
-            foreach (var img in product.Images.Where(i => i.ImageGroupGuid == chosenGroupGuid))
-            {
-                img.IsMain = true;
-            }
-            await this.context.SaveChangesAsync();
-
-            // Get the updated main large image (if available, otherwise fallback to any large image).
-            var mainLarge = product.Images.FirstOrDefault(i => i.IsMain && i.Size == EcomPlat.Data.Enums.ImageSize.Large)
-                             ?? product.Images.FirstOrDefault(i => i.Size == EcomPlat.Data.Enums.ImageSize.Large);
-
-            return this.Json(new { success = true, mainImageUrl = mainLarge?.ImageUrl });
-        }
-
     }
 }

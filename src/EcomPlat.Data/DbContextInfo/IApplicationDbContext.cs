@@ -8,6 +8,7 @@ namespace EcomPlat.Data.DbContextInfo
         DbSet<ApplicationUser> ApplicationUser { get; set; }
         DbSet<ApplicationUserRole> ApplicationUserRole { get; set; }
         DbSet<Category> Categories { get; set; }
+        DbSet<Company> Companies { get; set; }
         DbSet<ConfigSetting> ConfigSettings { get; set; }
         DbSet<OrderAddress> OrderAddresses { get; set; }
         DbSet<OrderItem> OrderItems { get; set; }

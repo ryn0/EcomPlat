@@ -1,13 +1,12 @@
 ﻿@model EcomPlat.Data.Models.Product
 
 @{
-    this.ViewData["Title"] = "Edit Product";
+    this.ViewData["Title"] = "Create Product";
 }
 
 <h2>@this.ViewData["Title"]</h2>
 
-<form asp-action="Edit" method="post" enctype="multipart/form-data">
-    <input type="hidden" asp-for="ProductId" />
+<form asp-action="Create" method="post" enctype="multipart/form-data"> 
     @await Html.PartialAsync("_ProductForm", this.Model)
     <button type="submit" class="btn btn-primary">Save Changes</button>
 </form>

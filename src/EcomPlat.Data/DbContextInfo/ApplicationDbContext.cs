@@ -14,6 +14,7 @@ namespace EcomPlat.Data.DbContextInfo
         public DbSet<ApplicationUser> ApplicationUser { get; set;  }
         public DbSet<ApplicationUserRole> ApplicationUserRole { get; set;  }
         public DbSet<Category> Categories { get; set;  }
+        public DbSet<Company> Companies { get; set; }
         public DbSet<ConfigSetting> ConfigSettings { get; set;  }
         public DbSet<OrderAddress> OrderAddresses { get; set;  }
         public DbSet<OrderItem> OrderItems { get; set;  }
@@ -108,8 +109,11 @@ namespace EcomPlat.Data.DbContextInfo
             });
 
             modelBuilder.Entity<ProductImage>()
-                        .HasIndex(pi => new { pi.ProductId, pi.DisplayOrder })
-                        .IsUnique();
+                .HasIndex(pi => new { pi.ProductId, pi.DisplayOrder, pi.ImageGroupGuid })
+                .IsUnique()
+                .HasFilter("[Size] = 1"); // assuming ImageSize.Small is 1
+
+            modelBuilder.Entity<Company>().ToTable("Companies");
         }
 
         private void SetDates()

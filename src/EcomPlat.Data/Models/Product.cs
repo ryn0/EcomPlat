@@ -102,6 +102,17 @@ namespace EcomPlat.Data.Models
         public Subcategory Subcategory { get; set; }
 
         /// <summary>
+        /// Gets or sets the company identifier (source company/brand).
+        /// </summary>
+        public int CompanyId { get; set; }
+
+        /// <summary>
+        /// Navigation property for the source company.
+        /// </summary>
+        [ValidateNever]
+        public Company Company { get; set; }
+
+        /// <summary>
         /// Gets or sets the collection of images associated with the product.
         /// </summary>
         public ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();

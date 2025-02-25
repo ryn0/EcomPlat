@@ -1,4 +1,5 @@
 ﻿using EcomPlat.Data.Models.BaseModels;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace EcomPlat.Data.Models
 {
@@ -18,6 +19,8 @@ namespace EcomPlat.Data.Models
 
         // Foreign key to the Product
         public int ProductId { get; set; }
+
+        [ValidateNever]
         public Product Product { get; set; }
     }
 }

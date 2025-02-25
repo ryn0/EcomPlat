@@ -4,11 +4,16 @@ using EcomPlat.Data.Models;
 using EcomPlat.FileStorage.Repositories.Interfaces;
 using EcomPlat.Utilities.Helpers;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
+using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace EcomPlat.Web.Areas.Account.Controllers
 {
@@ -30,6 +35,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             var products = await this.context.Products
                 .Include(p => p.Subcategory)
                     .ThenInclude(s => s.Category)
+                .Include(p => p.Company)
                 .ToListAsync();
             return this.View(products);
         }
@@ -44,6 +50,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             var product = await this.context.Products
                 .Include(p => p.Subcategory)
                     .ThenInclude(s => s.Category)
+                .Include(p => p.Company)
                 .FirstOrDefaultAsync(p => p.ProductId == id);
 
             if (product == null)
@@ -56,6 +63,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         public async Task<IActionResult> Create()
         {
             await this.PopulateSubcategoryDropDownList();
+            await this.PopulateCompanyDropDownList();
             return this.View();
         }
 
@@ -74,6 +82,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             }
 
             await this.PopulateSubcategoryDropDownList(product.SubcategoryId);
+            await this.PopulateCompanyDropDownList(product.CompanyId);
             return this.View(product);
         }
 
@@ -86,6 +95,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
 
             var product = await this.context.Products
                 .Include(p => p.Images)
+                .Include(p => p.Company)
                 .FirstOrDefaultAsync(p => p.ProductId == id);
             if (product == null)
             {
@@ -93,6 +103,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             }
 
             await this.PopulateSubcategoryDropDownList(product.SubcategoryId);
+            await this.PopulateCompanyDropDownList(product.CompanyId);
             return this.View(product);
         }
 
@@ -130,6 +141,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             }
 
             await this.PopulateSubcategoryDropDownList(product.SubcategoryId);
+            await this.PopulateCompanyDropDownList(product.CompanyId);
             return this.View(product);
         }
 
@@ -143,6 +155,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             var product = await this.context.Products
                 .Include(p => p.Subcategory)
                     .ThenInclude(s => s.Category)
+                .Include(p => p.Company)
                 .FirstOrDefaultAsync(p => p.ProductId == id);
             if (product == null)
             {
@@ -187,16 +200,28 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SetMainImage(int imageId, int productId)
         {
-            // Find all small images for the product.
-            var images = await this.context.ProductImages
-                .Where(pi => pi.ProductId == productId && pi.Size == ImageSize.Small)
-                .ToListAsync();
-
-            foreach (var img in images)
+            // Find the chosen image.
+            var chosenImage = await this.context.ProductImages
+                .FirstOrDefaultAsync(pi => pi.ProductImageId == imageId && pi.ProductId == productId);
+            if (chosenImage == null)
             {
-                img.IsMain = img.ProductImageId == imageId;
+                return this.NotFound();
+            }
+
+            // Get the group Guid of the chosen image.
+            Guid chosenGroupGuid = chosenImage.ImageGroupGuid;
+
+            // For this product, update all images:
+            // Mark as main if they belong to the chosen group; otherwise, mark as not main.
+            var allImages = await this.context.ProductImages
+                .Where(pi => pi.ProductId == productId)
+                .ToListAsync();
+            foreach (var img in allImages)
+            {
+                img.IsMain = img.ImageGroupGuid == chosenGroupGuid;
             }
             await this.context.SaveChangesAsync();
+
             return this.RedirectToAction("Edit", new { id = productId });
         }
 
@@ -204,29 +229,42 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MoveImageUp(int imageId, int productId)
         {
+            // (Move up logic unchanged from previous implementation)
             var image = await this.context.ProductImages
                 .FirstOrDefaultAsync(pi => pi.ProductImageId == imageId && pi.ProductId == productId && pi.Size == ImageSize.Small);
             if (image == null)
-            {
                 return this.NotFound();
-            }
 
-            var imageAbove = await this.context.ProductImages
-                .Where(pi => pi.ProductId == productId && pi.DisplayOrder < image.DisplayOrder && pi.Size == ImageSize.Small)
-                .OrderByDescending(pi => pi.DisplayOrder)
+            int currentGroupOrder = image.DisplayOrder;
+            var lowerGroupOrder = await this.context.ProductImages
+                .Where(pi => pi.ProductId == productId && pi.DisplayOrder < currentGroupOrder)
+                .Select(pi => pi.DisplayOrder)
+                .Distinct()
+                .OrderByDescending(o => o)
                 .FirstOrDefaultAsync();
 
-            if (imageAbove != null)
+            if (lowerGroupOrder == 0)
             {
-                int temp = image.DisplayOrder;
-                // Set a temporary value to break the circular dependency.
-                image.DisplayOrder = -1;
-                await this.context.SaveChangesAsync();
-
-                image.DisplayOrder = imageAbove.DisplayOrder;
-                imageAbove.DisplayOrder = temp;
-                await this.context.SaveChangesAsync();
+                return this.RedirectToAction("Edit", new { id = productId });
             }
+
+            var currentGroupImages = await this.context.ProductImages
+                .Where(pi => pi.ProductId == productId && pi.DisplayOrder == currentGroupOrder)
+                .ToListAsync();
+            var groupAboveImages = await this.context.ProductImages
+                .Where(pi => pi.ProductId == productId && pi.DisplayOrder == lowerGroupOrder)
+                .ToListAsync();
+
+            foreach (var img in currentGroupImages)
+            {
+                img.DisplayOrder = lowerGroupOrder;
+            }
+            foreach (var img in groupAboveImages)
+            {
+                img.DisplayOrder = currentGroupOrder;
+            }
+            await this.context.SaveChangesAsync();
+
             return this.RedirectToAction("Edit", new { id = productId });
         }
 
@@ -237,29 +275,40 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             var image = await this.context.ProductImages
                 .FirstOrDefaultAsync(pi => pi.ProductImageId == imageId && pi.ProductId == productId && pi.Size == ImageSize.Small);
             if (image == null)
-            {
                 return this.NotFound();
-            }
 
-            var imageBelow = await this.context.ProductImages
-                .Where(pi => pi.ProductId == productId && pi.DisplayOrder > image.DisplayOrder && pi.Size == ImageSize.Small)
-                .OrderBy(pi => pi.DisplayOrder)
+            int currentGroupOrder = image.DisplayOrder;
+            var higherGroupOrder = await this.context.ProductImages
+                .Where(pi => pi.ProductId == productId && pi.DisplayOrder > currentGroupOrder)
+                .Select(pi => pi.DisplayOrder)
+                .Distinct()
+                .OrderBy(o => o)
                 .FirstOrDefaultAsync();
 
-            if (imageBelow != null)
+            if (higherGroupOrder == 0)
             {
-                int temp = image.DisplayOrder;
-                // Set a temporary value to break the circular dependency.
-                image.DisplayOrder = -1;
-                await this.context.SaveChangesAsync();
-
-                image.DisplayOrder = imageBelow.DisplayOrder;
-                imageBelow.DisplayOrder = temp;
-                await this.context.SaveChangesAsync();
+                return this.RedirectToAction("Edit", new { id = productId });
             }
+
+            var currentGroupImages = await this.context.ProductImages
+                .Where(pi => pi.ProductId == productId && pi.DisplayOrder == currentGroupOrder)
+                .ToListAsync();
+            var groupBelowImages = await this.context.ProductImages
+                .Where(pi => pi.ProductId == productId && pi.DisplayOrder == higherGroupOrder)
+                .ToListAsync();
+
+            foreach (var img in currentGroupImages)
+            {
+                img.DisplayOrder = higherGroupOrder;
+            }
+            foreach (var img in groupBelowImages)
+            {
+                img.DisplayOrder = currentGroupOrder;
+            }
+            await this.context.SaveChangesAsync();
+
             return this.RedirectToAction("Edit", new { id = productId });
         }
-
 
         private bool ProductExists(int id)
         {
@@ -283,11 +332,38 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             this.ViewBag.SubCategoryId = new SelectList(list, "SubcategoryId", "DisplayText", selectedId);
         }
 
+        private async Task PopulateCompanyDropDownList(object selectedId = null)
+        {
+            var companies = await this.context.Companies
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
+            var list = companies.Select(c => new
+            {
+                c.CompanyId,
+                c.Name
+            });
+
+            this.ViewBag.CompanyId = new SelectList(list, "CompanyId", "Name", selectedId);
+        }
+
         /// <summary>
-        /// Processes all file uploads for a product, creating versions in different sizes.
+        /// Processes all file uploads for a product by creating multiple image versions.
+        /// Each file upload is treated as a group: all variants share the same DisplayOrder and ImageGroupGuid.
+        /// Files are uploaded to: /products/{ProductId}/{filename}_{ImageSize}{extension}.
         /// </summary>
-        /// <param name="product">The product to associate images with.</param>
-        /// <param name="productImages">The collection of uploaded files.</param>
+        /// <summary>
+        /// Processes all file uploads for a product by creating multiple image versions.
+        /// Each file upload is treated as a group: all variants share the same DisplayOrder and ImageGroupGuid.
+        /// Additionally, if no main image exists, the small variant of the first uploaded file is marked as main.
+        /// Files are uploaded to: /products/{ProductId}/{filename}_{ImageSize}{extension}.
+        /// </summary>
+        /// <summary>
+        /// Processes all file uploads for a product by creating multiple image versions.
+        /// Each file upload is treated as a group: all variants share the same DisplayOrder and ImageGroupGuid.
+        /// If the product currently has no main image, all variants in the group will be marked as main.
+        /// Files are uploaded to: /products/{ProductId}/{filename}_{ImageSize}{extension}.
+        /// </summary>
         private async Task ProcessProductImageUploads(Product product, IFormFileCollection productImages)
         {
             if (productImages == null || productImages.Count == 0)
@@ -295,50 +371,54 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 return;
             }
 
-            // Determine the current maximum display order for this product.
             int currentMaxOrder = await this.GetCurrentMaxDisplayOrder(product.ProductId);
             string directory = $"products/{product.ProductId}/";
+
+            // Check if a main image already exists.
+            bool hasMainImage = product.Images.Any(pi => pi.IsMain);
 
             foreach (var file in productImages)
             {
                 if (file != null && file.Length > 0)
                 {
-                    // Generate a new group id for this file upload.
-                    var groupId = Guid.NewGuid();
+                    currentMaxOrder++;
+                    Guid groupGuid = Guid.NewGuid();
+                    int groupOrder = currentMaxOrder;
 
                     // Define the sizes to generate.
                     var sizes = new[] { ImageSize.Small, ImageSize.Medium, ImageSize.Large, ImageSize.Raw };
 
                     foreach (var size in sizes)
                     {
-                        currentMaxOrder++;
-                        var productImage = await this.ProcessFileUploadForSize(product, file, size, directory, currentMaxOrder);
-                        // Set the same group id for each variant.
-                        productImage.ImageGroupGuid = groupId;
+                        var productImage = await this.ProcessFileUploadForSize(product, file, size, directory, groupOrder);
+                        productImage.ImageGroupGuid = groupGuid;
+                        // If no main image exists, mark all variants in this group as main.
+                        productImage.IsMain = !hasMainImage;
                         product.Images.Add(productImage);
+                    }
+
+                    // If we just marked this group as main, update the flag so that subsequent uploads won't override it.
+                    if (!hasMainImage)
+                    {
+                        hasMainImage = true;
                     }
                 }
             }
             await this.context.SaveChangesAsync();
         }
 
-
         /// <summary>
         /// Returns the current maximum DisplayOrder for a given product.
         /// </summary>
-        /// <param name="productId">The product id.</param>
-        /// <returns>An integer representing the current maximum display order.</returns>
         private async Task<int> GetCurrentMaxDisplayOrder(int productId)
         {
             int currentMaxOrder = 0;
-            // Check images already loaded in the product.
-            if (this.context.Products.Any(p => p.ProductId == productId))
+            var existingImages = await this.context.ProductImages
+                .Where(pi => pi.ProductId == productId)
+                .ToListAsync();
+            if (existingImages.Any())
             {
-                var images = await this.context.ProductImages.Where(pi => pi.ProductId == productId).ToListAsync();
-                if (images.Any())
-                {
-                    currentMaxOrder = images.Max(pi => pi.DisplayOrder);
-                }
+                currentMaxOrder = existingImages.Max(pi => pi.DisplayOrder);
             }
             return currentMaxOrder;
         }
@@ -347,15 +427,8 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         /// Processes an individual file upload for a given image size.
         /// Resizes the image (if needed), uploads it, and returns a new ProductImage record.
         /// </summary>
-        /// <param name="product">The product associated with the image.</param>
-        /// <param name="file">The uploaded file.</param>
-        /// <param name="size">The desired ImageSize.</param>
-        /// <param name="directory">The directory path where the image will be stored.</param>
-        /// <param name="displayOrder">The sequential display order for this image.</param>
-        /// <returns>A new ProductImage record.</returns>
         private async Task<ProductImage> ProcessFileUploadForSize(Product product, IFormFile file, ImageSize size, string directory, int displayOrder)
         {
-            // Get file name and extension.
             var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file.FileName);
             var extension = Path.GetExtension(file.FileName);
             string finalFileName;
@@ -365,18 +438,15 @@ namespace EcomPlat.Web.Areas.Account.Controllers
 
             if (size == ImageSize.Raw)
             {
-                // For Raw, use the file as-is.
                 uploadStream = new MemoryStream();
                 await file.CopyToAsync(uploadStream);
                 uploadStream.Position = 0;
             }
             else
             {
-                // Resize image based on the size.
                 uploadStream = await this.ResizeImageAsync(file, size);
             }
 
-            // Upload the file.
             var imageUri = await this.siteFilesRepository.UploadAsync(uploadStream, finalFileName, directory);
             uploadStream.Dispose();
 
@@ -391,11 +461,8 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         }
 
         /// <summary>
-        /// Resizes the uploaded file to a specific size.
+        /// Resizes the uploaded file to a specific size using ImageSharp.
         /// </summary>
-        /// <param name="file">The uploaded IFormFile.</param>
-        /// <param name="size">The target ImageSize (Small, Medium, or Large).</param>
-        /// <returns>A MemoryStream containing the resized image.</returns>
         private async Task<MemoryStream> ResizeImageAsync(IFormFile file, ImageSize size)
         {
             int maxDimension = size switch
@@ -414,7 +481,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             var resizeOptions = new ResizeOptions
             {
                 Mode = ResizeMode.Max,
-                Size = new Size(maxDimension, maxDimension)
+                Size = new SixLabors.ImageSharp.Size(maxDimension, maxDimension)
             };
             image.Mutate(x => x.Resize(resizeOptions));
 

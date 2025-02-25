@@ -1,6 +1,5 @@
 ﻿@model EcomPlat.Data.Models.Product
 
-<!-- Render an anti-forgery token here so that it's available on the page -->
 @Html.AntiForgeryToken()
 
 <div asp-validation-summary="All" class="text-danger"></div>
@@ -10,70 +9,90 @@
     <input asp-for="Name" class="form-control" />
     <span asp-validation-for="Name" class="text-danger"></span>
 </div>
+
 <div class="form-group">
     <label asp-for="ProductKey" class="control-label"></label>
     <input asp-for="ProductKey" class="form-control" />
     <span asp-validation-for="ProductKey" class="text-danger"></span>
 </div>
+
 <div class="form-group">
     <label asp-for="Description" class="control-label"></label>
     <textarea asp-for="Description" class="form-control"></textarea>
     <span asp-validation-for="Description" class="text-danger"></span>
 </div>
+
 <div class="form-group">
     <label asp-for="Price" class="control-label"></label>
     <input asp-for="Price" class="form-control" />
     <span asp-validation-for="Price" class="text-danger"></span>
 </div>
+
 <div class="form-group">
     <label asp-for="SalePrice" class="control-label"></label>
     <input asp-for="SalePrice" class="form-control" />
     <span asp-validation-for="SalePrice" class="text-danger"></span>
 </div>
+
 <div class="form-group">
     <label asp-for="IsAvailable" class="control-label"></label>
     <input asp-for="IsAvailable" class="form-check-input" type="checkbox" />
     <span asp-validation-for="IsAvailable" class="text-danger"></span>
 </div>
+
 <div class="form-group">
     <label asp-for="ProductWeightOunces" class="control-label"></label>
     <input asp-for="ProductWeightOunces" class="form-control" />
     <span asp-validation-for="ProductWeightOunces" class="text-danger"></span>
 </div>
+
 <div class="form-group">
     <label asp-for="ShippingWeightOunces" class="control-label"></label>
     <input asp-for="ShippingWeightOunces" class="form-control" />
     <span asp-validation-for="ShippingWeightOunces" class="text-danger"></span>
 </div>
+
 <div class="form-group">
     <label asp-for="HeightInches" class="control-label"></label>
     <input asp-for="HeightInches" class="form-control" />
     <span asp-validation-for="HeightInches" class="text-danger"></span>
 </div>
+
 <div class="form-group">
     <label asp-for="WidthInches" class="control-label"></label>
     <input asp-for="WidthInches" class="form-control" />
     <span asp-validation-for="WidthInches" class="text-danger"></span>
 </div>
+
 <div class="form-group">
     <label asp-for="LengthInches" class="control-label"></label>
     <input asp-for="LengthInches" class="form-control" />
     <span asp-validation-for="LengthInches" class="text-danger"></span>
 </div>
+
 <div class="form-group">
     <label asp-for="Sku" class="control-label"></label>
     <input asp-for="Sku" class="form-control" />
     <span asp-validation-for="Sku" class="text-danger"></span>
 </div>
+
 <div class="form-group">
     <label asp-for="StockQuantity" class="control-label"></label>
     <input asp-for="StockQuantity" class="form-control" />
     <span asp-validation-for="StockQuantity" class="text-danger"></span>
 </div>
+
 <div class="form-group">
     <label asp-for="SubcategoryId" class="control-label"></label>
-    <select asp-for="SubcategoryId" asp-items="this.ViewBag.SubCategoryId" class="form-control"></select>
+    <select asp-for="SubcategoryId" asp-items="ViewBag.SubCategoryId" class="form-control"></select>
     <span asp-validation-for="SubcategoryId" class="text-danger"></span>
+</div>
+
+<!-- New: Company selection dropdown -->
+<div class="form-group">
+    <label asp-for="CompanyId" class="control-label"></label>
+    <select asp-for="CompanyId" asp-items="ViewBag.CompanyId" class="form-control"></select>
+    <span asp-validation-for="CompanyId" class="text-danger"></span>
 </div>
 
 <!-- File upload for new images -->

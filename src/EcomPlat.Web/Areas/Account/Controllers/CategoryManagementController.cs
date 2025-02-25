@@ -3,6 +3,7 @@ using EcomPlat.Data.Models;
 using EcomPlat.Utilities.Helpers;
 using EcomPlat.Web.Constants;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,10 +13,12 @@ namespace EcomPlat.Web.Areas.Account.Controllers
     [Authorize]
     public class CategoryManagementController : Controller
     {
+        private readonly UserManager<ApplicationUser> userManager;
         private readonly ApplicationDbContext context;
 
-        public CategoryManagementController(ApplicationDbContext context)
+        public CategoryManagementController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
+            this.userManager = userManager;
             this.context = context;
         }
 
@@ -56,6 +59,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         {
             if (this.ModelState.IsValid)
             {
+                category.CreatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
                 category = this.Clean(category);
                 this.context.Add(category);
                 await this.context.SaveChangesAsync();
@@ -93,6 +97,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 try
                 {
+                    category.UpdatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
                     category = this.Clean(category);
                     this.context.Update(category);
                     await this.context.SaveChangesAsync();

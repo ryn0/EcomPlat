@@ -2,6 +2,7 @@
 using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -12,10 +13,12 @@ namespace EcomPlat.Web.Areas.Account.Controllers
     [Authorize]
     public class InventoryManagementController : Controller
     {
+        private readonly UserManager<ApplicationUser> userManager;
         private readonly ApplicationDbContext context;
 
-        public InventoryManagementController(ApplicationDbContext context)
+        public InventoryManagementController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
+            this.userManager = userManager;
             this.context = context;
         }
 
@@ -62,6 +65,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         {
             if (this.ModelState.IsValid)
             {
+                inventory.CreatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
                 this.context.Add(inventory);
                 await this.context.SaveChangesAsync();
                 return this.RedirectToAction(nameof(this.Index));
@@ -105,6 +109,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 try
                 {
+                    inventory.UpdatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
                     this.context.Update(inventory);
                     await this.context.SaveChangesAsync();
                 }

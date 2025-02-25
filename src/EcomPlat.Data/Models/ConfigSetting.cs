@@ -3,7 +3,7 @@ using EcomPlat.Data.Models.BaseModels;
 
 namespace EcomPlat.Data.Models
 {
-    public class ConfigSetting : StateInfo
+    public class ConfigSetting : UserStateInfo
     {
         public int ConfigSettingId { get; set; }
 

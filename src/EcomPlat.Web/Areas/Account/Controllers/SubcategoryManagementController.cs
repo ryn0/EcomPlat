@@ -2,6 +2,7 @@
 using EcomPlat.Data.Models;
 using EcomPlat.Utilities.Helpers;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -12,10 +13,12 @@ namespace EcomPlat.Web.Areas.Account.Controllers
     [Authorize]
     public class SubcategoryManagementController : Controller
     {
+        private readonly UserManager<ApplicationUser> userManager;
         private readonly ApplicationDbContext context;
 
-        public SubcategoryManagementController(ApplicationDbContext context)
+        public SubcategoryManagementController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
+            this.userManager = userManager;
             this.context = context;
         }
 
@@ -59,6 +62,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         {
             if (this.ModelState.IsValid)
             {
+                subcategory.CreatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
                 subcategory = this.Clean(subcategory);
                 this.context.Add(subcategory);
                 await this.context.SaveChangesAsync();
@@ -99,6 +103,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 try
                 {
+                    subcategory.UpdatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
                     subcategory = this.Clean(subcategory);
                     this.context.Update(subcategory);
                     await this.context.SaveChangesAsync();

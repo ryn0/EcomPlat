@@ -1,19 +1,20 @@
-﻿using EcomPlat.Data.DbContextInfo;
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Enums;
 using EcomPlat.Data.Models;
 using EcomPlat.FileStorage.Repositories.Interfaces;
 using EcomPlat.Utilities.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace EcomPlat.Web.Areas.Account.Controllers
 {
@@ -21,11 +22,13 @@ namespace EcomPlat.Web.Areas.Account.Controllers
     [Authorize]
     public class ProductsManagementController : Controller
     {
+        private readonly UserManager<ApplicationUser> userManager;
         private readonly ApplicationDbContext context;
         private readonly ISiteFilesRepository siteFilesRepository;
 
-        public ProductsManagementController(ApplicationDbContext context, ISiteFilesRepository siteFilesRepository)
+        public ProductsManagementController(ApplicationDbContext context, ISiteFilesRepository siteFilesRepository, UserManager<ApplicationUser> userManager)
         {
+            this.userManager = userManager;
             this.context = context;
             this.siteFilesRepository = siteFilesRepository;
         }
@@ -73,6 +76,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         {
             if (this.ModelState.IsValid)
             {
+                product.CreatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
                 product.ProductKey = StringHelpers.UrlKey(product.Name);
                 this.context.Add(product);
                 await this.context.SaveChangesAsync();
@@ -120,6 +124,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 try
                 {
+                    product.UpdatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
                     this.context.Update(product);
                     await this.context.SaveChangesAsync();
 
@@ -218,6 +223,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 .ToListAsync();
             foreach (var img in allImages)
             {
+                img.UpdatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
                 img.IsMain = img.ImageGroupGuid == chosenGroupGuid;
             }
             await this.context.SaveChangesAsync();
@@ -261,6 +267,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             }
             foreach (var img in groupAboveImages)
             {
+                img.UpdatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
                 img.DisplayOrder = currentGroupOrder;
             }
             await this.context.SaveChangesAsync();
@@ -299,6 +306,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
 
             foreach (var img in currentGroupImages)
             {
+                img.UpdatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
                 img.DisplayOrder = higherGroupOrder;
             }
             foreach (var img in groupBelowImages)
@@ -391,6 +399,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                     foreach (var size in sizes)
                     {
                         var productImage = await this.ProcessFileUploadForSize(product, file, size, directory, groupOrder);
+                        productImage.CreatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
                         productImage.ImageGroupGuid = groupGuid;
                         // If no main image exists, mark all variants in this group as main.
                         productImage.IsMain = !hasMainImage;

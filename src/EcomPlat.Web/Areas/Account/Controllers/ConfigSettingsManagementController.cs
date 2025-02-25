@@ -1,7 +1,9 @@
 ﻿using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Enums;
+using EcomPlat.Data.Migrations;
 using EcomPlat.Data.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -12,10 +14,12 @@ namespace EcomPlat.Web.Areas.Account.Controllers
     [Authorize]
     public class ConfigSettingsManagementController : Controller
     {
+        private readonly UserManager<ApplicationUser> userManager;
         private readonly ApplicationDbContext context;
 
-        public ConfigSettingsManagementController(ApplicationDbContext context)
+        public ConfigSettingsManagementController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
+            this.userManager = userManager;
             this.context = context;
         }
 
@@ -56,6 +60,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         {
             if (this.ModelState.IsValid)
             {
+                configSetting.CreatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
                 this.context.Add(configSetting);
                 await this.context.SaveChangesAsync();
                 return this.RedirectToAction(nameof(this.Index));
@@ -93,6 +98,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 try
                 {
+                    configSetting.UpdatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
                     this.context.Update(configSetting);
                     await this.context.SaveChangesAsync();
                 }

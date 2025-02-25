@@ -1,6 +1,7 @@
 ﻿using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,9 +12,11 @@ namespace EcomPlat.Web.Areas.Account.Controllers
     public class CompanyManagementController : Controller
     {
         private readonly ApplicationDbContext context;
+        private readonly UserManager<ApplicationUser> userManager;
 
-        public CompanyManagementController(ApplicationDbContext context)
+        public CompanyManagementController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
+            this.userManager = userManager;
             this.context = context;
         }
 
@@ -53,6 +56,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         {
             if (this.ModelState.IsValid)
             {
+                company.CreatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
                 this.context.Add(company);
                 await this.context.SaveChangesAsync();
                 return this.RedirectToAction(nameof(this.Index));
@@ -89,6 +93,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 try
                 {
+                    company.UpdatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
                     this.context.Update(company);
                     await this.context.SaveChangesAsync();
                 }

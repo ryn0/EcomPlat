@@ -114,6 +114,10 @@ namespace EcomPlat.Data.DbContextInfo
                 .HasFilter("[Size] = 1"); // assuming ImageSize.Small is 1
 
             modelBuilder.Entity<Company>().ToTable("Companies");
+
+            modelBuilder.Entity<Product>()
+                        .HasIndex(p => p.ProductKey)
+                        .IsUnique();
         }
 
         private void SetDates()

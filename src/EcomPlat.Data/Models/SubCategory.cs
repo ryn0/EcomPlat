@@ -12,6 +12,7 @@ namespace EcomPlat.Data.Models
         [MaxLength(100)]
         public string Name { get; set; }
 
+        [ValidateNever]
         [Required]
         [MaxLength(100)]
         public string SubcategoryKey { get; set; }

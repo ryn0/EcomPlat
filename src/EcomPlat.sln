@@ -20,6 +20,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcomPlat.Web", "EcomPlat.We
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcomPlat.FileStorage", "EcomPlat.FileStorage\EcomPlat.FileStorage.csproj", "{33EA8FB9-993A-4F8D-A2BD-D7AA75A1C7EE}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CI", "CI", "{81FCEBEA-13B1-4530-B401-3989D8325290}"
+	ProjectSection(SolutionItems) = preProject
+		..\CI-Tools\Scripts\ApplicationHelperFunctions.ps1 = ..\CI-Tools\Scripts\ApplicationHelperFunctions.ps1
+		..\CI-Tools\Scripts\BuildHelperFunctions.ps1 = ..\CI-Tools\Scripts\BuildHelperFunctions.ps1
+		..\CI-Tools\CI-Main.ps1 = ..\CI-Tools\CI-Main.ps1
+		..\CI.bat = ..\CI.bat
+		..\CI-Tools\Scripts\GeneralHelperFunctions.ps1 = ..\CI-Tools\Scripts\GeneralHelperFunctions.ps1
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

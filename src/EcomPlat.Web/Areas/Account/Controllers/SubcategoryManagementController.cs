@@ -132,6 +132,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
+
             var subcategory = await this.context.Subcategories
                 .Include(s => s.Category)
                 .FirstOrDefaultAsync(s => s.SubcategoryId == id);
@@ -162,7 +163,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         private Subcategory Clean(Subcategory subcategory)
         {
             subcategory.Name = subcategory.Name.Trim();
-            subcategory.SubcategoryKey = StringHelpers.UrlKey(subcategory.SubcategoryKey);
+            subcategory.SubcategoryKey = StringHelpers.UrlKey(subcategory.Name);
             return subcategory;
         }
 

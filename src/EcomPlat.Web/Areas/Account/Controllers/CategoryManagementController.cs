@@ -155,7 +155,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         private Category Clean(Category category)
         {
             category.Name = category.Name.Trim();
-            category.CategoryKey = StringHelpers.UrlKey(category.CategoryKey);
+            category.CategoryKey = StringHelpers.UrlKey(category.Name);
             return category;
         }
 

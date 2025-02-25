@@ -1,0 +1,118 @@
+﻿@model EcomPlat.Data.Models.Product
+
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<h2>@Model.Name</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        @{
+            // Get the main large image (already displayed in a separate section)
+            var mainLarge = Model.Images.FirstOrDefault(i => i.IsMain && i.Size == EcomPlat.Data.Enums.ImageSize.Large)
+            ?? Model.Images.FirstOrDefault(i => i.Size == EcomPlat.Data.Enums.ImageSize.Large);
+
+            // Filter for additional (medium) images not belonging to the main image group.
+            var otherImages = Model.Images
+            .Where(i => i.Size == EcomPlat.Data.Enums.ImageSize.Medium &&
+            (mainLarge == null || i.ImageGroupGuid != mainLarge.ImageGroupGuid))
+            .OrderBy(i => i.DisplayOrder)
+            .ToList();
+        }
+        @if (mainLarge != null)
+        {
+            <img id="mainImage" src="@mainLarge.ImageUrl" alt="@Model.Name" class="img-fluid" />
+        }
+        else
+        {
+            <p>No image available</p>
+        }
+    </div>
+
+    <div class="col-md-6">
+        <dl class="row">
+            <dt class="col-sm-4">Price</dt>
+            <dd class="col-sm-8">@Model.Price.ToString("C")</dd>
+
+            @if (Model.SalePrice.HasValue)
+            {
+                <dt class="col-sm-4">Sale Price</dt>
+                <dd class="col-sm-8">@Model.SalePrice.Value.ToString("C")</dd>
+            }
+
+            <dt class="col-sm-4">Company</dt>
+            <dd class="col-sm-8">@Model.Company?.Name</dd>
+
+            <dt class="col-sm-4">Category</dt>
+            <dd class="col-sm-8">@Model.Subcategory?.Category?.Name > @Model.Subcategory?.Name</dd>
+
+            <dt class="col-sm-4">In Stock</dt>
+            <dd class="col-sm-8">@Model.IsAvailable</dd>
+        </dl>
+        <p>@Model.Description</p>
+    </div>
+</div>
+
+<hr />
+
+
+
+@if (otherImages.Any())
+{
+    <h4>Other Images</h4>
+    <div class="row">
+        @foreach (var img in otherImages)
+        {
+            <div class="col-auto mb-2">
+                <img src="@img.ImageUrl" alt="Thumbnail" class="thumbnail-img"
+                     data-image-id="@img.ProductImageId" data-product-key="@Model.ProductKey"
+                     style="width:100px; height:100px; object-fit:cover; cursor:pointer;" />
+            </div>
+        }
+    </div>
+}
+else if (mainLarge != null)
+{
+    <h4>Images</h4>
+    <div class="row">
+        <div class="col-auto mb-2">
+            <img src="@mainLarge.ImageUrl" alt="Thumbnail" class="thumbnail-img"
+                 data-image-id="@mainLarge.ProductImageId" data-product-key="@Model.ProductKey"
+                 style="width:100px; height:100px; object-fit:cover; cursor:pointer;" />
+        </div>
+    </div>
+}
+
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $(".thumbnail-img").click(function (e) {
+                e.preventDefault();
+                var img = $(this);
+                var imageId = img.data("image-id");
+                var productKey = img.data("product-key");
+
+                $.ajax({
+                    url: '@Url.Action("SetMainImageAjax", "Products", new { area = "Public" })',
+                    type: "POST",
+                    data: { imageId: imageId, productKey: productKey },
+                    success: function (data) {
+                        if (data.success) {
+                            $("#mainImage").attr("src", data.mainImageUrl);
+                        } else {
+                            alert("Error: " + data.message);
+                        }
+                    },
+                    error: function () {
+                        alert("An error occurred while updating the main image.");
+                    }
+                });
+            });
+        });
+    </script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -22,5 +22,7 @@ namespace EcomPlat.Data.Models
 
         // Sequential order for displaying images; must be unique for each product.
         public int DisplayOrder { get; set; }
+
+        public Guid ImageGroupGuid { get; set; }
     }
 }

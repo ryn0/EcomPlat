@@ -98,7 +98,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Product product, IFormFileCollection ProductImages)
+        public async Task<IActionResult> Edit(int id, Product product, IFormFileCollection productImages)
         {
             if (id != product.ProductId)
             {
@@ -112,7 +112,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                     this.context.Update(product);
                     await this.context.SaveChangesAsync();
 
-                    await this.ProcessProductImageUploads(product, ProductImages);
+                    await this.ProcessProductImageUploads(product, productImages);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -169,12 +169,97 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             var productImage = await this.context.ProductImages.FindAsync(imageId);
             if (productImage != null)
             {
-                await this.siteFilesRepository.DeleteFileAsync(productImage.ImageUrl);
-                this.context.ProductImages.Remove(productImage);
+                Guid groupGuid = productImage.ImageGroupGuid;
+                var imagesToDelete = await this.context.ProductImages
+                    .Where(pi => pi.ProductId == productId && pi.ImageGroupGuid == groupGuid)
+                    .ToListAsync();
+                foreach (var img in imagesToDelete)
+                {
+                    await this.siteFilesRepository.DeleteFileAsync(img.ImageUrl);
+                    this.context.ProductImages.Remove(img);
+                }
                 await this.context.SaveChangesAsync();
             }
             return this.RedirectToAction("Edit", new { id = productId });
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetMainImage(int imageId, int productId)
+        {
+            // Find all small images for the product.
+            var images = await this.context.ProductImages
+                .Where(pi => pi.ProductId == productId && pi.Size == ImageSize.Small)
+                .ToListAsync();
+
+            foreach (var img in images)
+            {
+                img.IsMain = img.ProductImageId == imageId;
+            }
+            await this.context.SaveChangesAsync();
+            return this.RedirectToAction("Edit", new { id = productId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MoveImageUp(int imageId, int productId)
+        {
+            var image = await this.context.ProductImages
+                .FirstOrDefaultAsync(pi => pi.ProductImageId == imageId && pi.ProductId == productId && pi.Size == ImageSize.Small);
+            if (image == null)
+            {
+                return this.NotFound();
+            }
+
+            var imageAbove = await this.context.ProductImages
+                .Where(pi => pi.ProductId == productId && pi.DisplayOrder < image.DisplayOrder && pi.Size == ImageSize.Small)
+                .OrderByDescending(pi => pi.DisplayOrder)
+                .FirstOrDefaultAsync();
+
+            if (imageAbove != null)
+            {
+                int temp = image.DisplayOrder;
+                // Set a temporary value to break the circular dependency.
+                image.DisplayOrder = -1;
+                await this.context.SaveChangesAsync();
+
+                image.DisplayOrder = imageAbove.DisplayOrder;
+                imageAbove.DisplayOrder = temp;
+                await this.context.SaveChangesAsync();
+            }
+            return this.RedirectToAction("Edit", new { id = productId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MoveImageDown(int imageId, int productId)
+        {
+            var image = await this.context.ProductImages
+                .FirstOrDefaultAsync(pi => pi.ProductImageId == imageId && pi.ProductId == productId && pi.Size == ImageSize.Small);
+            if (image == null)
+            {
+                return this.NotFound();
+            }
+
+            var imageBelow = await this.context.ProductImages
+                .Where(pi => pi.ProductId == productId && pi.DisplayOrder > image.DisplayOrder && pi.Size == ImageSize.Small)
+                .OrderBy(pi => pi.DisplayOrder)
+                .FirstOrDefaultAsync();
+
+            if (imageBelow != null)
+            {
+                int temp = image.DisplayOrder;
+                // Set a temporary value to break the circular dependency.
+                image.DisplayOrder = -1;
+                await this.context.SaveChangesAsync();
+
+                image.DisplayOrder = imageBelow.DisplayOrder;
+                imageBelow.DisplayOrder = temp;
+                await this.context.SaveChangesAsync();
+            }
+            return this.RedirectToAction("Edit", new { id = productId });
+        }
+
 
         private bool ProductExists(int id)
         {
@@ -210,30 +295,33 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 return;
             }
 
-            // Determine current maximum display order for this product.
+            // Determine the current maximum display order for this product.
             int currentMaxOrder = await this.GetCurrentMaxDisplayOrder(product.ProductId);
-
-            // Define sizes to process (excluding Unknown).
-            var sizes = new[] { ImageSize.Small, ImageSize.Medium, ImageSize.Large, ImageSize.Raw };
-
-            // Directory for uploads: /products/{ProductId}/
             string directory = $"products/{product.ProductId}/";
 
             foreach (var file in productImages)
             {
                 if (file != null && file.Length > 0)
                 {
+                    // Generate a new group id for this file upload.
+                    var groupId = Guid.NewGuid();
+
+                    // Define the sizes to generate.
+                    var sizes = new[] { ImageSize.Small, ImageSize.Medium, ImageSize.Large, ImageSize.Raw };
+
                     foreach (var size in sizes)
                     {
-                        // Process the file for a given size.
                         currentMaxOrder++;
                         var productImage = await this.ProcessFileUploadForSize(product, file, size, directory, currentMaxOrder);
+                        // Set the same group id for each variant.
+                        productImage.ImageGroupGuid = groupId;
                         product.Images.Add(productImage);
                     }
                 }
             }
             await this.context.SaveChangesAsync();
         }
+
 
         /// <summary>
         /// Returns the current maximum DisplayOrder for a given product.
@@ -273,10 +361,11 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             string finalFileName;
             MemoryStream uploadStream;
 
+            finalFileName = $"{fileNameWithoutExtension}_{size}{extension}".ToLower();
+
             if (size == ImageSize.Raw)
             {
                 // For Raw, use the file as-is.
-                finalFileName = $"{fileNameWithoutExtension}_{size}{extension}";
                 uploadStream = new MemoryStream();
                 await file.CopyToAsync(uploadStream);
                 uploadStream.Position = 0;
@@ -284,7 +373,6 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             else
             {
                 // Resize image based on the size.
-                finalFileName = $"{fileNameWithoutExtension}_{size}{extension}".ToLower();
                 uploadStream = await this.ResizeImageAsync(file, size);
             }
 

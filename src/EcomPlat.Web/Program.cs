@@ -1,13 +1,9 @@
 using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Web.Extensions;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Remove duplicate registrations here; use the extension method for most services.
+// Use your extension method to register services.
 builder.Services.AddApplicationServices(builder.Configuration);
 
 var app = builder.Build();
@@ -18,14 +14,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.MapControllerRoute(
-    name: "areas",
-    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
-
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
-
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
@@ -35,7 +23,16 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Set up default routing (adjust as needed)
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+
+// Map the default route.
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

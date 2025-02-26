@@ -18,6 +18,6 @@ namespace EcomPlat.Data.Models
         public string CategoryKey { get; set; }
 
         // Navigation property to subcategories
-        public ICollection<Subcategory> SubCategories { get; set; } = new List<Subcategory>();
+        public ICollection<Subcategory> Subcategories { get; set; } = new List<Subcategory>();
     }
 }

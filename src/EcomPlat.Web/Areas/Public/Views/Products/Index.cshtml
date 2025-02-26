@@ -1,99 +1,202 @@
 ﻿@model IEnumerable<EcomPlat.Data.Models.Product>
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using EcomPlat.Data.Models
 
 @{
     ViewData["Title"] = "Product Catalog";
+
     int currentPage = (int)(ViewData["CurrentPage"] ?? 1);
     int pageSize = (int)(ViewData["PageSize"] ?? 10);
     int totalProducts = (int)(ViewData["TotalProducts"] ?? 0);
     int totalPages = (int)Math.Ceiling((double)totalProducts / pageSize);
+
     string sortOrder = (string)(ViewData["SortOrder"] ?? "");
+    string selectedCategoryKey = (string)(ViewData["SelectedCategoryKey"] ?? "");
+    string selectedSubCategoryKey = (string)(ViewData["SelectedSubCategoryKey"] ?? "");
+
+    // The list of all categories (with subcategories) is stored in ViewBag.AllCategories
+    var allCategories = ViewBag.AllCategories as List<Category> ?? new List<Category>();
 }
 
 <h2>@ViewData["Title"]</h2>
 
-@using Microsoft.AspNetCore.Mvc.Rendering
-@{
-    var sortOptions = new List<SelectListItem>
-    {
-        new SelectListItem { Value = "", Text = "Default", Selected = string.IsNullOrEmpty(sortOrder) },
-        new SelectListItem { Value = "priceAsc", Text = "Price: Low to High", Selected = sortOrder == "priceAsc" },
-        new SelectListItem { Value = "priceDesc", Text = "Price: High to Low", Selected = sortOrder == "priceDesc" }
-    };
-}
-
-<!-- Use a flex container with inline alignment -->
-<form method="get"
-      asp-area="Public"
-      asp-controller="Products"
-      asp-action="Index"
-      class="d-inline-flex align-items-center mb-3">
-
-    <!-- Label -->
-    <label for="sortOrder" class="me-2 mb-0">Sort by:</label>
-
-    <!-- Dropdown with a fixed minimum width -->
-    <select id="sortOrder"
-            name="sortOrder"
-            class="form-select me-2"
-            style="width: auto; min-width: 130px;"
-            asp-items="sortOptions">
-    </select>
-
-    <!-- Hidden fields for paging, if needed -->
-    <input type="hidden" name="page" value="@currentPage" />
-    <input type="hidden" name="pageSize" value="@pageSize" />
-
-    <!-- Sort button -->
-    <button type="submit" class="btn btn-primary">Sort</button>
-</form>
-
-
-<!-- Product listing -->
-<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">
-    @foreach (var product in Model)
-    {
-        <div class="col d-flex justify-content-center">
-            <div class="card product-card">
-                <div class="img-link-wrapper">
+<div class="row">
+    <!-- Left sidebar: categories (col-md-3) -->
+    <div class="col-md-3 mb-3">
+        <h5>Categories</h5>
+        <ul class="list-group">
+            <!-- All Products link -->
+            <li class="list-group-item p-0">
+                <div class="p-2 @(string.IsNullOrEmpty(selectedCategoryKey) ? "bg-primary text-white" : "")">
                     <a asp-area="Public"
                        asp-controller="Products"
-                       asp-action="DetailsByKey"
-                       asp-route-productKey="@product.ProductKey">
-                        <img src="@product.Images.FirstOrDefault(i => i.Size == EcomPlat.Data.Enums.ImageSize.Medium && i.IsMain == true)?.ImageUrl"
-                             class="product-image"
-                             alt="@product.Name" />
+                       asp-action="Index"
+                       class="text-decoration-none @(string.IsNullOrEmpty(selectedCategoryKey) ? "text-white" : "text-dark")">
+                        All Products
                     </a>
                 </div>
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title">@product.Name</h5>
-                    <p class="card-text">@product.Price.ToString("C")</p>
-                    <a asp-area="Public"
-                       asp-controller="Products"
-                       asp-action="DetailsByKey"
-                       asp-route-productKey="@product.ProductKey"
-                       class="btn btn-primary btn-sm mt-auto">
-                        View
-                    </a>
-                </div>
-            </div>
-        </div>
-    }
-</div>
-
-<!-- Paging controls -->
-<nav aria-label="Page navigation">
-    <ul class="pagination justify-content-center mt-3">
-        <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
-            <a class="page-link" asp-area="Public" asp-controller="Products" asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-pageSize="@(pageSize)" asp-route-sortOrder="@sortOrder">Previous</a>
-        </li>
-        @for (int i = 1; i <= totalPages; i++)
-        {
-            <li class="page-item @(i == currentPage ? "active" : "")">
-                <a class="page-link" asp-area="Public" asp-controller="Products" asp-action="Index" asp-route-page="@i" asp-route-pageSize="@(pageSize)" asp-route-sortOrder="@sortOrder">@i</a>
             </li>
+
+            @foreach (var cat in allCategories)
+            {
+                bool isCatSelected = (cat.CategoryKey == selectedCategoryKey);
+
+                <li class="list-group-item p-0">
+                    <!-- Category row with conditional background -->
+                    <div class="p-2 @(isCatSelected ? "bg-primary text-white" : "")">
+                        <a asp-area="Public"
+                           asp-controller="Products"
+                           asp-action="Index"
+                           asp-route-categoryKey="@cat.CategoryKey"
+                           asp-route-subCategoryKey=""  
+                           class="text-decoration-none @(isCatSelected ? "text-white" : "text-dark")">
+                            @cat.Name
+                        </a>
+                    </div>
+
+                    <!-- Subcategories (indented if category is selected) -->
+                    @if (isCatSelected && cat.Subcategories?.Any() == true)
+                    {
+                        <ul class="list-unstyled bg-white ms-3 mb-2">
+                            @foreach (var sub in cat.Subcategories.OrderBy(sc => sc.Name))
+                            {
+                                bool isSubSelected = (sub.SubcategoryKey == selectedSubCategoryKey);
+
+                                <li class="mb-1">
+                                    <a asp-area="Public"
+                                       asp-controller="Products"
+                                       asp-action="Index"
+                                       asp-route-categoryKey="@cat.CategoryKey"
+                                       asp-route-subCategoryKey="@sub.SubcategoryKey"
+                                       class="text-decoration-none @(isSubSelected ? "fw-bold" : "text-dark")">
+                                        @sub.Name
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </li>
+            }
+        </ul>
+    </div>
+
+    <!-- Right column: sorting + products + paging (col-md-9) -->
+    <div class="col-md-9">
+        <!-- Sort row -->
+        @{
+            var sortOptions = new List<SelectListItem>
+            {
+                new SelectListItem { Value = "", Text = "Default", Selected = string.IsNullOrEmpty(sortOrder) },
+                new SelectListItem { Value = "priceAsc", Text = "Price: Low to High", Selected = sortOrder == "priceAsc" },
+                new SelectListItem { Value = "priceDesc", Text = "Price: High to Low", Selected = sortOrder == "priceDesc" }
+            };
         }
-        <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
-            <a class="page-link" asp-area="Public" asp-controller="Products" asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-pageSize="@(pageSize)" asp-route-sortOrder="@sortOrder">Next</a>
-        </li>
-    </ul>
-</nav>
+        <form method="get"
+              asp-area="Public"
+              asp-controller="Products"
+              asp-action="Index"
+              class="d-inline-flex align-items-center mb-3">
+            <!-- Preserve category/subcategory if currently selected -->
+            @if (!string.IsNullOrEmpty(selectedCategoryKey))
+            {
+                <input type="hidden" name="categoryKey" value="@selectedCategoryKey" />
+            }
+            @if (!string.IsNullOrEmpty(selectedSubCategoryKey))
+            {
+                <input type="hidden" name="subCategoryKey" value="@selectedSubCategoryKey" />
+            }
+
+            <label for="sortOrder" class="me-2 mb-0">Sort by:</label>
+            <select id="sortOrder"
+                    name="sortOrder"
+                    class="form-select me-2"
+                    style="width: auto; min-width: 130px;"
+                    asp-items="sortOptions">
+            </select>
+
+            <input type="hidden" name="page" value="@currentPage" />
+            <input type="hidden" name="pageSize" value="@pageSize" />
+            <button type="submit" class="btn btn-primary">Sort</button>
+        </form>
+
+        <!-- Product listing row -->
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">
+            @foreach (var product in Model)
+            {
+                <div class="col d-flex justify-content-center">
+                    <div class="card product-card">
+                        <div class="img-link-wrapper">
+                            <a asp-area="Public"
+                               asp-controller="Products"
+                               asp-action="DetailsByKey"
+                               asp-route-productKey="@product.ProductKey">
+                                <img src="@product.Images.FirstOrDefault(i => i.Size == EcomPlat.Data.Enums.ImageSize.Medium && i.IsMain)?.ImageUrl"
+                                     class="product-image"
+                                     alt="@product.Name" />
+                            </a>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">@product.Name</h5>
+                            <p class="card-text">@product.Price.ToString("C")</p>
+                            <a asp-area="Public"
+                               asp-controller="Products"
+                               asp-action="DetailsByKey"
+                               asp-route-productKey="@product.ProductKey"
+                               class="btn btn-primary btn-sm mt-auto">
+                                View
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Paging controls row -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mt-3">
+                <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
+                    <a class="page-link"
+                       asp-area="Public"
+                       asp-controller="Products"
+                       asp-action="Index"
+                       asp-route-categoryKey="@selectedCategoryKey"
+                       asp-route-subCategoryKey="@selectedSubCategoryKey"
+                       asp-route-page="@(currentPage - 1)"
+                       asp-route-pageSize="@(pageSize)"
+                       asp-route-sortOrder="@sortOrder">
+                       Previous
+                    </a>
+                </li>
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <li class="page-item @(i == currentPage ? "active" : "")">
+                        <a class="page-link"
+                           asp-area="Public"
+                           asp-controller="Products"
+                           asp-action="Index"
+                           asp-route-categoryKey="@selectedCategoryKey"
+                           asp-route-subCategoryKey="@selectedSubCategoryKey"
+                           asp-route-page="@i"
+                           asp-route-pageSize="@(pageSize)"
+                           asp-route-sortOrder="@sortOrder">
+                           @i
+                        </a>
+                    </li>
+                }
+                <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
+                    <a class="page-link"
+                       asp-area="Public"
+                       asp-controller="Products"
+                       asp-action="Index"
+                       asp-route-categoryKey="@selectedCategoryKey"
+                       asp-route-subCategoryKey="@selectedSubCategoryKey"
+                       asp-route-page="@(currentPage + 1)"
+                       asp-route-pageSize="@(pageSize)"
+                       asp-route-sortOrder="@sortOrder">
+                       Next
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>

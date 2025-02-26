@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using EcomPlat.Data.Constants;
 using EcomPlat.Data.DbContextInfo;
@@ -11,7 +12,9 @@ using Microsoft.EntityFrameworkCore;
 namespace EcomPlat.Web.Areas.Public.Controllers
 {
     [Area(Constants.StringConstants.PublicArea)]
-    [Route("products")]
+    // This route pattern allows optional categoryKey and subCategoryKey:
+    // e.g. /products, /products/SomeCategory, /products/SomeCategory/SomeSubCategory
+    [Route("products/{categoryKey?}/{subCategoryKey?}")]
     public class ProductsController : Controller
     {
         private const int DefaultPageSize = 50;
@@ -22,10 +25,13 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             this.context = context;
         }
 
-        // GET: /products or /products/index?sortOrder=priceAsc or priceDesc
         [HttpGet("")]
-        [HttpGet("index")]
-        public async Task<IActionResult> Index(int page = 1, int pageSize = DefaultPageSize, string sortOrder = "")
+        public async Task<IActionResult> Index(
+            string categoryKey,
+            string subCategoryKey,
+            int page = 1,
+            int pageSize = DefaultPageSize,
+            string sortOrder = "")
         {
             if (page < 1)
             {
@@ -36,6 +42,13 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 pageSize = 10;
             }
 
+            // 1. Load categories for sidebar
+            var allCategories = await this.context.Categories
+                .Include(c => c.Subcategories)
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
+            // 2. Base query: only available products
             var query = this.context.Products
                 .Include(p => p.Images)
                 .Include(p => p.Subcategory)
@@ -43,7 +56,19 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 .Include(p => p.Company)
                 .Where(p => p.IsAvailable);
 
-            // Apply sorting based on sortOrder parameter.
+            // 3. Filter by categoryKey (if provided)
+            if (!string.IsNullOrWhiteSpace(categoryKey))
+            {
+                query = query.Where(p => p.Subcategory.Category.CategoryKey == categoryKey);
+
+                // 4. Filter by subCategoryKey (if provided)
+                if (!string.IsNullOrWhiteSpace(subCategoryKey))
+                {
+                    query = query.Where(p => p.Subcategory.SubcategoryKey == subCategoryKey);
+                }
+            }
+
+            // 5. Apply sorting
             if (sortOrder == "priceAsc")
             {
                 query = query.OrderBy(p => p.Price);
@@ -58,16 +83,13 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             }
 
             int totalProducts = await query.CountAsync();
-
             var products = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
-            // Retrieve config settings from the database.
+            // Rewrite image URLs for each product
             var config = await this.GetImageUrlConfigAsync();
-
-            // Rewrite image URLs for each product.
             foreach (var product in products)
             {
                 foreach (var image in product.Images)
@@ -76,12 +98,18 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 }
             }
 
+            // Pass data to the view
             this.ViewData["SortOrder"] = sortOrder;
             this.ViewData["CurrentPage"] = page;
             this.ViewData["PageSize"] = pageSize;
             this.ViewData["TotalProducts"] = totalProducts;
+            this.ViewData["SelectedCategoryKey"] = categoryKey;
+            this.ViewData["SelectedSubCategoryKey"] = subCategoryKey;
 
-            return this.View(products);
+            // We'll store the category list in ViewBag for the sidebar
+            this.ViewBag.AllCategories = allCategories;
+
+            return this.View("Index", products);
         }
 
         [HttpGet("/product/{productKey}")]
@@ -100,7 +128,6 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             }
 
             var config = await this.GetImageUrlConfigAsync();
-
             foreach (var image in product.Images)
             {
                 image.ImageUrl = UrlRewriter.RewriteImageUrl(image.ImageUrl, config.cdnPrefix, config.blobPrefix);

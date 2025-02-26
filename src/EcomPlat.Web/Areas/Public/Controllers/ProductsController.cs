@@ -1,10 +1,5 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using EcomPlat.Data.Constants;
-using EcomPlat.Data.DbContextInfo;
+﻿using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Enums;
-using EcomPlat.Data.Models;
 using EcomPlat.Utilities.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

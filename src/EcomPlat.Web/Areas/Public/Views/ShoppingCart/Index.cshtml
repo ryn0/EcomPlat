@@ -1,0 +1,52 @@
+﻿@model EcomPlat.Data.Models.ShoppingCart
+
+@{
+    ViewData["Title"] = "Your Shopping Cart";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+@if (Model.Items.Any())
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Subtotal</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@item.Product.Name</td>
+                    <td>@item.Product.Price.ToString("C")</td>
+                    <td>
+                        <!-- Form to update the quantity -->
+                        <form method="post" asp-area="Public" asp-controller="ShoppingCart" asp-action="UpdateItem" class="d-inline-flex align-items-center">
+                            <input type="hidden" name="cartItemId" value="@item.ShoppingCartItemId" />
+                            <button type="submit" name="action" value="decrease" class="btn btn-sm btn-secondary me-1">-</button>
+                            <input type="text" name="quantity" value="@item.Quantity" style="width:40px; text-align:center;" />
+                            <button type="submit" name="action" value="increase" class="btn btn-sm btn-secondary ms-1">+</button>
+                        </form>
+                    </td>
+                    <td>@(item.Product.Price * item.Quantity).ToString("C")</td>
+                    <td>
+                        <!-- Form to remove the item -->
+                        <form method="post" asp-area="Public" asp-controller="ShoppingCart" asp-action="RemoveItem">
+                            <input type="hidden" name="cartItemId" value="@item.ShoppingCartItemId" />
+                            <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>Your shopping cart is empty.</p>
+}

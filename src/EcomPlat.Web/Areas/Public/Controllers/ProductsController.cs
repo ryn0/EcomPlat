@@ -22,27 +22,44 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             this.context = context;
         }
 
-        // GET: /products or /products/index
+        // GET: /products or /products/index?sortOrder=priceAsc or priceDesc
         [HttpGet("")]
         [HttpGet("index")]
-        public async Task<IActionResult> Index(int page = 1, int pageSize = DefaultPageSize)
+        public async Task<IActionResult> Index(int page = 1, int pageSize = DefaultPageSize, string sortOrder = "")
         {
-            if (page < 1) { page = 1; }
-            if (pageSize < 1) { pageSize = 10; }
+            if (page < 1)
+            {
+                page = 1;
+            }
+            if (pageSize < 1)
+            {
+                pageSize = 10;
+            }
 
-            // Query only available products.
             var query = this.context.Products
                 .Include(p => p.Images)
                 .Include(p => p.Subcategory)
                     .ThenInclude(s => s.Category)
                 .Include(p => p.Company)
-                .Where(p => p.IsAvailable)
-                .OrderBy(p => p.Name);
+                .Where(p => p.IsAvailable);
+
+            // Apply sorting based on sortOrder parameter.
+            if (sortOrder == "priceAsc")
+            {
+                query = query.OrderBy(p => p.Price);
+            }
+            else if (sortOrder == "priceDesc")
+            {
+                query = query.OrderByDescending(p => p.Price);
+            }
+            else
+            {
+                query = query.OrderBy(p => p.Name);
+            }
 
             int totalProducts = await query.CountAsync();
 
             var products = await query
-                .OrderBy(p => p.ProductId)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
@@ -59,6 +76,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 }
             }
 
+            this.ViewData["SortOrder"] = sortOrder;
             this.ViewData["CurrentPage"] = page;
             this.ViewData["PageSize"] = pageSize;
             this.ViewData["TotalProducts"] = totalProducts;
@@ -69,7 +87,6 @@ namespace EcomPlat.Web.Areas.Public.Controllers
         [HttpGet("/product/{productKey}")]
         public async Task<IActionResult> DetailsByKey(string productKey)
         {
-            // Find the product by productKey.
             var product = await this.context.Products
                 .Include(p => p.Images)
                 .Include(p => p.Company)
@@ -82,10 +99,8 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 return this.NotFound();
             }
 
-            // Retrieve config settings from the database.
             var config = await this.GetImageUrlConfigAsync();
 
-            // Rewrite image URLs.
             foreach (var image in product.Images)
             {
                 image.ImageUrl = UrlRewriter.RewriteImageUrl(image.ImageUrl, config.cdnPrefix, config.blobPrefix);
@@ -97,16 +112,13 @@ namespace EcomPlat.Web.Areas.Public.Controllers
         /// <summary>
         /// Retrieves the CDN and blob URL prefixes from the ConfigSettings table.
         /// </summary>
-        /// <returns>A tuple containing the CDN prefix and Blob prefix.</returns>
         private async Task<(string cdnPrefix, string blobPrefix)> GetImageUrlConfigAsync()
         {
-            // Assuming you have a DbSet<ConfigSetting> ConfigSettings in your context and a SiteConfigSetting enum.
             var cdnSetting = await this.context.ConfigSettings
                 .FirstOrDefaultAsync(cs => cs.SiteConfigSetting == SiteConfigSetting.CdnPrefixWithProtocol);
             var blobSetting = await this.context.ConfigSettings
                 .FirstOrDefaultAsync(cs => cs.SiteConfigSetting == SiteConfigSetting.BlobPrefix);
 
-            // Trim any trailing slash for consistency.
             string cdnPrefix = cdnSetting?.Content?.TrimEnd('/') ?? "";
             string blobPrefix = blobSetting?.Content?.TrimEnd('/') ?? "";
             return (cdnPrefix, blobPrefix);

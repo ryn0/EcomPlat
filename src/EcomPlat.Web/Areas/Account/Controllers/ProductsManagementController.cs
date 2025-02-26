@@ -39,6 +39,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 .Include(p => p.Subcategory)
                     .ThenInclude(s => s.Category)
                 .Include(p => p.Company)
+                .Include(p => p.Images)
                 .ToListAsync();
             return this.View(products);
         }

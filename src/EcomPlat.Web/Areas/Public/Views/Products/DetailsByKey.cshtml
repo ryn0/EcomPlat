@@ -39,7 +39,7 @@
             <dt class="col-sm-4">Category</dt>
             <dd class="col-sm-8">@Model.Subcategory?.Category?.Name > @Model.Subcategory?.Name</dd>
             <dt class="col-sm-4">In Stock</dt>
-            <dd class="col-sm-8">@Model.IsAvailable</dd>
+            <dd class="col-sm-8">@(Model.IsAvailable ? "Yes" : "No")</dd>
         </dl>
         <p>@Model.Description</p>
     </div>

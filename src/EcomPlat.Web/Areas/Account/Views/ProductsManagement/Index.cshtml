@@ -1,10 +1,10 @@
 ﻿@model IEnumerable<EcomPlat.Data.Models.Product>
 
 @{
-    this.ViewData["Title"] = "Manage Products";
+    ViewData["Title"] = "Manage Products";
 }
 
-<h2>@this.ViewData["Title"]</h2>
+<h2>@ViewData["Title"]</h2>
 
 <p>
     <a asp-action="Create" class="btn btn-primary">Add New Product</a>
@@ -13,26 +13,31 @@
 <table class="table">
     <thead>
         <tr>
+            <th>Image</th>
             <th>Name</th>
-            <th>SKU</th>
             <th>Price</th>
-            <th>Sale Price</th>
             <th>Available</th>
-            <th>Category</th>
-            <th>Subcategory</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var product in this.Model)
+        @foreach (var product in Model)
         {
+            var smallImage = product.Images.FirstOrDefault(i => i.Size == EcomPlat.Data.Enums.ImageSize.Small);
             <tr>
+                <td>
+                    @if (smallImage != null)
+                    {
+                        <img src="@smallImage.ImageUrl" alt="@product.Name" style="width:50px; height:50px; object-fit:cover;" />
+                    }
+                    else
+                    {
+                        <span>No image</span>
+                    }
+                </td>
                 <td>@product.Name</td>
-                <td>@product.Sku</td>
                 <td>@product.Price.ToString("C")</td>
-                <td>@(product.SalePrice.HasValue ? product.SalePrice.Value.ToString("C") : "-")</td>
                 <td>@(product.IsAvailable ? "Yes" : "No")</td>
-                <td>@product.Subcategory?.Name</td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@product.ProductId" class="btn btn-sm btn-warning">Edit</a>
                     <a asp-action="Details" asp-route-id="@product.ProductId" class="btn btn-sm btn-info">Details</a>

@@ -8,6 +8,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
     [Route("products")]
     public class ProductsController : Controller
     {
+        private const int DefaultPageSize = 50;
         private readonly ApplicationDbContext context;
 
         public ProductsController(ApplicationDbContext context)
@@ -18,19 +19,19 @@ namespace EcomPlat.Web.Areas.Public.Controllers
         // GET: /products or /products/index
         [HttpGet("")]
         [HttpGet("index")]
-        public async Task<IActionResult> Index(int page = 1, int pageSize = 10)
+        public async Task<IActionResult> Index(int page = 1, int pageSize = DefaultPageSize)
         {
             if (page < 1) { page = 1; }
             if (pageSize < 1) { pageSize = 10; }
 
             // Query only available products.
             var query = this.context.Products
-                .Include(p => p.Images)  // Include images
+                .Include(p => p.Images)
                 .Include(p => p.Subcategory)
-                    .ThenInclude(s => s.Category)
+                .ThenInclude(s => s.Category)
                 .Include(p => p.Company)
-                .Where(p => p.IsAvailable);
-
+                .Where(p => p.IsAvailable)
+                .OrderBy(p => p.Name);
 
             int totalProducts = await query.CountAsync();
 

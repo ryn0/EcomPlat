@@ -20,7 +20,8 @@ namespace EcomPlat.Utilities.Helpers
             { "GR", "Greece" },
             { "MX", "Mexico" },
             { "LT", "Lithuania" },
-            { "AT", "Austria" }
+            { "AT", "Austria" },
+            { "CR", "Costa Rica" }
         };
 
         /// <summary>

@@ -23,7 +23,7 @@
                        asp-controller="Products"
                        asp-action="DetailsByKey"
                        asp-route-productKey="@product.ProductKey">
-                        <img src="@product.Images.FirstOrDefault(i => i.Size == EcomPlat.Data.Enums.ImageSize.Medium)?.ImageUrl"
+                        <img src="@product.Images.FirstOrDefault(i => i.Size == EcomPlat.Data.Enums.ImageSize.Medium && i.IsMain == true)?.ImageUrl"
                              class="product-image"
                              alt="@product.Name" />
                     </a>

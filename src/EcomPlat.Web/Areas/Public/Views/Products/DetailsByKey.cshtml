@@ -37,7 +37,35 @@
             <dt class="col-sm-4">Country of Origin</dt>
             <dd class="col-sm-8">@EcomPlat.Utilities.Helpers.CountryHelper.GetCountryName(Model.CountryOfOrigin)</dd>
             <dt class="col-sm-4">Category</dt>
-            <dd class="col-sm-8">@Model.Subcategory?.Category?.Name > @Model.Subcategory?.Name</dd>
+            <dd class="col-sm-8">
+                @if (Model.Subcategory?.Category != null)
+                {
+                    <!-- Category link (clears any subcategory filter) -->
+                    <a asp-area="Public"
+                       asp-controller="Products"
+                       asp-action="Index"
+                       asp-route-categoryKey="@Model.Subcategory.Category.CategoryKey"
+                       asp-route-subCategoryKey=""
+                       class="text-decoration-none">
+                        @Model.Subcategory.Category.Name
+                    </a>
+                    @: &gt;
+                    <!-- Subcategory link -->
+                    <a asp-area="Public"
+                       asp-controller="Products"
+                       asp-action="Index"
+                       asp-route-categoryKey="@Model.Subcategory.Category.CategoryKey"
+                       asp-route-subCategoryKey="@Model.Subcategory.SubcategoryKey"
+                       class="text-decoration-none">
+                        @Model.Subcategory.Name
+                    </a>
+                }
+                else
+                {
+                    <span>No Category</span>
+                }
+            </dd>
+
             <dt class="col-sm-4">In Stock</dt>
             <dd class="col-sm-8">@(Model.IsAvailable ? "Yes" : "No")</dd>
         </dl>

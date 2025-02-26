@@ -31,11 +31,14 @@
                     <a asp-area="Public"
                        asp-controller="Products"
                        asp-action="Index"
+                       asp-route-categoryKey=""
+                       asp-route-subCategoryKey=""
                        class="text-decoration-none @(string.IsNullOrEmpty(selectedCategoryKey) ? "text-white" : "text-dark")">
                         All Products
                     </a>
                 </div>
             </li>
+
 
             @foreach (var cat in allCategories)
             {

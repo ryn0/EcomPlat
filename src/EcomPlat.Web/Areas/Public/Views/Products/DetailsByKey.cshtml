@@ -76,16 +76,17 @@
             <dt class="col-sm-4">In Stock</dt>
             <dd class="col-sm-8">@(Model.IsAvailable ? "Yes" : "No")</dd>
         </dl>
-        <p>@Model.Description</p>
-
+     
         <form asp-area="Public" asp-controller="ShoppingCart" asp-action="AddToCart" method="post">
             <input type="hidden" name="productId" value="@Model.ProductId" />
             <div class="form-group">
                 <label for="quantity">Quantity:</label>
                 <input type="number" id="quantity" name="quantity" value="1" min="1" class="form-control" style="width:100px;" />
             </div>
-            <button type="submit" class="btn btn-primary mt-2">Add to Cart</button>
+            <button type="submit" class="btn btn-success mt-2">Add to Cart</button>
         </form>
+         <br />
+        <p>@Model.Description</p>
 
     </div>
 

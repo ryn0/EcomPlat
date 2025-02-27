@@ -14,6 +14,10 @@ namespace EcomPlat.Data.Models
         // Indicates whether this address is Billing or Shipping.
         public AddressType AddressType { get; set; }
 
+        [Required]
+        [MaxLength(100)]
+        public string Name { get; set; }
+
         // Address fields
         [Required]
         [MaxLength(100)]

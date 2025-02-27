@@ -43,5 +43,54 @@ namespace EcomPlat.Utilities.Helpers
             // Step 7: Convert to lowercase.
             return urlSafe.ToLowerInvariant();
         }
+
+        /// <summary>
+        /// Truncates the given text to a specified maximum length without cutting words in half.
+        /// If the text is truncated, an ellipsis ("...") is appended.
+        /// </summary>
+        /// <param name="input">The string to truncate.</param>
+        /// <param name="maxLength">The maximum allowed length (default is 60).</param>
+        /// <returns>A truncated string that does not exceed maxLength.</returns>
+        public static string TruncateToNearestWord(string input, int maxLength = 60)
+        {
+            // If input is null/empty or already within the limit, return it as-is.
+            if (string.IsNullOrWhiteSpace(input) || input.Length <= maxLength)
+            {
+                return input;
+            }
+
+            // Split into words (removing extra spaces).
+            var words = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            var sb = new StringBuilder();
+            foreach (var word in words)
+            {
+                // +1 for the space we'll add before the word (except the first).
+                // +3 for the ellipsis length ("...").
+                int neededLength = sb.Length == 0 ? word.Length : sb.Length + 1 + word.Length;
+
+                // Check if adding this word (plus the ellipsis) would exceed the limit.
+                if (neededLength + 3 > maxLength)
+                {
+                    break;
+                }
+
+                // If it's not the first word, add a space before it.
+                if (sb.Length > 0)
+                {
+                    sb.Append(' ');
+                }
+
+                sb.Append(word);
+            }
+
+            // Append the ellipsis if we actually truncated anything.
+            if (sb.Length < input.Length)
+            {
+                sb.Append("...");
+            }
+
+            return sb.ToString();
+        }
     }
 }

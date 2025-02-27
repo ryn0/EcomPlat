@@ -9,10 +9,9 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/EcomPlat.Web.styles.css" asp-append-version="true" />
     <style>
-  
-        /* Card styling (optional) */
+
         .product-card {
-            width: 220px; /* fixed width for consistency */
+            width: 220px;
             border: 1px solid #ddd;
             border-radius: 4px;
             display: flex;
@@ -20,15 +19,14 @@
             margin-bottom: 10px;
         }
 
-        /* Wrapper to maintain layout. Not strictly necessary, but can help spacing. */
+        /* Image wrapper to maintain layout */
         .img-link-wrapper {
             width: 100%;
-            height: 200px; /* fixed height to create a square for the image */
+            height: 200px;
             overflow: hidden;
             position: relative;
         }
 
-        /* The product image is forced to fill the wrapper, cropped to a square. */
         .product-image {
             width: 100%;
             height: 100%;
@@ -36,14 +34,50 @@
             display: block;
         }
 
-        .flag-logo {
-            width: 32px;
-            height: auto;
-            border: 1px solid #ddd;
-            border-radius: 2px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            vertical-align: middle;
-            margin-right: 5px;
+        /* The card body has a fixed height to keep alignment consistent */
+        .product-card .card-body {
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            height: 200px !important;
+        }
+
+        /* Title allows up to two lines, then truncates */
+        .product-title {
+          
+            margin-bottom: 15px;
+            line-height: 1.2em;
+            /* 2 lines * 1.2em = 2.4em total height for the text block. */
+ 
+            height: 5em !important;
+        }
+
+        /* Price row, slightly smaller space */
+        .price-line {
+            height: 18px;
+            margin-bottom: 3px;
+        }
+
+        /* Flag row, slightly smaller space */
+        .flag-line {
+            height: 16px;
+            margin-bottom: 2px;
+            display: flex;
+            align-items: center;
+        }
+
+            .flag-line img {
+                height: 16px;
+                width: auto;
+                margin-right: 5px;
+            }
+
+        /* Buttons at the bottom */
+        .button-row {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
     </style>
@@ -62,9 +96,7 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
+                     
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="Public" asp-controller="Products" asp-action="Index">Products</a>
                         </li>

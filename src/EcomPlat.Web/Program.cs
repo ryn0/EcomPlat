@@ -9,11 +9,19 @@ builder.Services.AddDistributedMemoryCache();
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
     options.CheckConsentNeeded = context => false;
-    options.MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+    options.MinimumSameSitePolicy = SameSiteMode.Lax;
 });
 
 // Register application services.
 builder.Services.AddApplicationServices(builder.Configuration);
+
+builder.Services.AddDistributedSqlServerCache(options =>
+{
+    options.ConnectionString = builder.Configuration.GetConnectionString("SqlServerCache");
+    options.SchemaName = "dbo";
+    options.TableName = "SessionCache";
+});
+
 
 // Add session with secure settings.
 builder.Services.AddSession(options =>
@@ -22,8 +30,8 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromDays(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     // Optionally, specify a domain if necessary:
     // options.Cookie.Domain = "yourdomain.com";
 });

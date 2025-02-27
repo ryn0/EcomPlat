@@ -59,7 +59,7 @@
                         <form method="post" asp-area="Public" asp-controller="ShoppingCart" asp-action="RemoveItem">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="cartItemId" value="@item.ShoppingCartItemId" />
-                            <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                            <button type="submit" class="btn btn-sm btn-danger">X</button>
                         </form>
                     </td>
                 </tr>

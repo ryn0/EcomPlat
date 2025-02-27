@@ -1,4 +1,5 @@
 ﻿@model IEnumerable<EcomPlat.Data.Models.Product>
+@using EcomPlat.Utilities.Helpers
 @using Microsoft.AspNetCore.Mvc.Rendering
 @using EcomPlat.Data.Models
 
@@ -17,6 +18,9 @@
     // The list of all categories (with subcategories) is stored in ViewBag.AllCategories
     var allCategories = ViewBag.AllCategories as List<Category> ?? new List<Category>();
 }
+
+<!-- Inline CSS from above, or place it in your site CSS -->
+ 
 
 <h2>@ViewData["Title"]</h2>
 
@@ -38,13 +42,10 @@
                     </a>
                 </div>
             </li>
-
             @foreach (var cat in allCategories)
             {
                 bool isCatSelected = (cat.CategoryKey == selectedCategoryKey);
-
                 <li class="list-group-item p-0">
-                    <!-- Category row with conditional background -->
                     <div class="p-2 @(isCatSelected ? "bg-primary text-white" : "")">
                         <a asp-area="Public"
                            asp-controller="Products"
@@ -55,15 +56,12 @@
                             @cat.Name
                         </a>
                     </div>
-
-                    <!-- Subcategories (indented if category is selected) -->
                     @if (isCatSelected && cat.Subcategories?.Any() == true)
                     {
                         <ul class="list-unstyled bg-white ms-3 mb-2">
                             @foreach (var sub in cat.Subcategories.OrderBy(sc => sc.Name))
                             {
                                 bool isSubSelected = (sub.SubcategoryKey == selectedSubCategoryKey);
-
                                 <li class="mb-1">
                                     <a asp-area="Public"
                                        asp-controller="Products"
@@ -98,7 +96,6 @@
               asp-controller="Products"
               asp-action="Index"
               class="d-inline-flex align-items-center mb-3">
-            <!-- Preserve category/subcategory if currently selected -->
             @if (!string.IsNullOrEmpty(selectedCategoryKey))
             {
                 <input type="hidden" name="categoryKey" value="@selectedCategoryKey" />
@@ -107,7 +104,6 @@
             {
                 <input type="hidden" name="subCategoryKey" value="@selectedSubCategoryKey" />
             }
-
             <label for="sortOrder" class="me-2 mb-0">Sort by:</label>
             <select id="sortOrder"
                     name="sortOrder"
@@ -115,7 +111,6 @@
                     style="width: auto; min-width: 130px;"
                     asp-items="sortOptions">
             </select>
-
             <input type="hidden" name="page" value="@currentPage" />
             <input type="hidden" name="pageSize" value="@pageSize" />
             <button type="submit" class="btn btn-primary">Sort</button>
@@ -137,19 +132,25 @@
                                      alt="@product.Name" />
                             </a>
                         </div>
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title">@product.Name</h5>
-                            <p class="card-text">@product.Price.ToString("C")</p>
-
-                            <div class="col-sm-8">
-                            <img src="@(Url.Content("~/images/flags/" + product.CountryOfOrigin.ToLower() + ".png"))"
-                                 alt="@product.CountryOfOrigin"
-                                 class="@product.CountryOfOrigin.ToLower()" />
+                        <div class="card-body">
+                            <!-- Product Name row -->
+                            <div class="product-title">
+                                <h5 class="card-title">@StringHelpers.TruncateToNearestWord(product.Name, 60)</h5>
                             </div>
 
-                            <!-- Align buttons at the bottom (mt-auto) and place them on opposite ends (justify-content-between) -->
-                            <div class="mt-auto d-flex justify-content-between align-items-center">
-                                <!-- View button (left) -->
+                            <!-- Price row -->
+                            <div class="price-line">
+                                <p class="card-text">@product.Price.ToString("C")</p>
+                            </div>
+
+                            <!-- Flag row -->
+                            <div class="flag-line">
+                                <img src="@(Url.Content("~/images/flags/" + product.CountryOfOrigin.ToLower() + ".png"))"
+                                     alt="@product.CountryOfOrigin" />
+                            </div>
+
+                            <!-- Buttons at the bottom -->
+                            <div class="button-row">
                                 <a asp-area="Public"
                                    asp-controller="Products"
                                    asp-action="DetailsByKey"
@@ -157,8 +158,6 @@
                                    class="btn btn-primary btn-sm">
                                     View
                                 </a>
-
-                                <!-- Add to Cart button (right) -->
                                 <form method="post"
                                       asp-area="Public"
                                       asp-controller="ShoppingCart"

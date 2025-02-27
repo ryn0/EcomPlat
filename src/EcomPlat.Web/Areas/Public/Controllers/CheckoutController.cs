@@ -9,6 +9,7 @@ using EcomPlat.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace EcomPlat.Web.Areas.Public.Controllers
 {
@@ -27,7 +28,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
         [HttpGet("")]
         public async Task<IActionResult> Index()
         {
-            // Ensure the session is created.
+            // Force session creation.
             this.HttpContext.Session.Set("Init", new byte[] { 1 });
             string sessionId = this.HttpContext.Session.Id;
 
@@ -64,7 +65,37 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 ShippingAmount = shippingAmount
             };
 
+            // Load any saved shipping address from this.TempData.
+            var shippingAddressJson = this.TempData.Peek("ShippingAddress") as string;
+            if (!string.IsNullOrEmpty(shippingAddressJson))
+            {
+                viewModel.ShippingAddress = JsonConvert.DeserializeObject<OrderAddress>(shippingAddressJson);
+            }
+            else
+            {
+                viewModel.ShippingAddress = new OrderAddress();
+            }
+
             return this.View(viewModel);
+        }
+
+        // POST: /checkout/set-address
+        [HttpPost("set-address")]
+        [ValidateAntiForgeryToken]
+        public IActionResult SetShippingAddress(CheckoutViewModel model)
+        {
+            // Here you could add additional server‐side validation for the address.
+            this.TempData["ShippingAddress"] = JsonConvert.SerializeObject(model.ShippingAddress);
+            return this.RedirectToAction("Index");
+        }
+
+        // GET: /checkout/edit-address
+        [HttpGet("edit-address")]
+        public IActionResult EditShippingAddress()
+        {
+            // Clear the saved shipping address so the form will be displayed again.
+            this.TempData.Remove("ShippingAddress");
+            return this.RedirectToAction("Index");
         }
 
         // POST: /checkout
@@ -72,7 +103,6 @@ namespace EcomPlat.Web.Areas.Public.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Checkout(CheckoutViewModel model)
         {
-            // Reload the cart to ensure up-to-date product stock levels.
             string sessionId = this.HttpContext.Session.Id;
             model.Cart = await this.context.ShoppingCarts
                 .Include(c => c.Items)
@@ -93,7 +123,6 @@ namespace EcomPlat.Web.Areas.Public.Controllers
 
             if (!this.ModelState.IsValid)
             {
-                // Rebuild shipping options if there's an error.
                 model.ShippingOptions = Enum.GetValues(typeof(ShippingMethod))
                     .Cast<ShippingMethod>()
                     .Select(sm => new SelectListItem
@@ -107,7 +136,6 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             }
 
             // TODO: Process the order (create Order record, process payment, etc.)
-
             return this.RedirectToAction("OrderConfirmation", "Checkout", new { area = "Public" });
         }
 

@@ -12,5 +12,6 @@ namespace EcomPlat.Web.Models
         public ShippingMethod SelectedShippingMethod { get; set; }
         public decimal ShippingAmount { get; set; } = 10;
         public decimal OrderTotal { get; set; }
+        public OrderAddress ShippingAddress { get; set; } = new OrderAddress();
     }
 }

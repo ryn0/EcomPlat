@@ -3,56 +3,97 @@
 
 @{
     ViewData["Title"] = "Checkout";
+    bool addressIsSet = !string.IsNullOrEmpty(Model.ShippingAddress?.AddressLine1);
 }
 
 <h2>@ViewData["Title"]</h2>
 
-@if (!ViewData.ModelState.IsValid)
+@if (!addressIsSet)
 {
-    <div class="alert alert-danger">
-        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
-        {
-            <p>@error.ErrorMessage</p>
-        }
-    </div>
+    <h3>Enter Shipping Address</h3>
+    <form method="post" asp-action="SetShippingAddress" class="mb-3">
+        @Html.AntiForgeryToken()
+        <div class="form-group">
+            <label for="ShippingAddress_AddressLine1">Address Line 1</label>
+            <input type="text" id="ShippingAddress_AddressLine1" name="ShippingAddress.AddressLine1" class="form-control" required />
+        </div>
+        <div class="form-group">
+            <label for="ShippingAddress_AddressLine2">Address Line 2</label>
+            <input type="text" id="ShippingAddress_AddressLine2" name="ShippingAddress.AddressLine2" class="form-control" />
+        </div>
+        <div class="form-group">
+            <label for="ShippingAddress_City">City</label>
+            <input type="text" id="ShippingAddress_City" name="ShippingAddress.City" class="form-control" required />
+        </div>
+        <div class="form-group">
+            <label for="ShippingAddress_StateRegion">State/Region</label>
+            <input type="text" id="ShippingAddress_StateRegion" name="ShippingAddress.StateRegion" class="form-control" required />
+        </div>
+        <div class="form-group">
+            <label for="ShippingAddress_PostalCode">Postal Code</label>
+            <input type="text" id="ShippingAddress_PostalCode" name="ShippingAddress.PostalCode" class="form-control" required />
+        </div>
+        <div class="form-group">
+            <label for="ShippingAddress_CountryIso">Country (2-letter ISO)</label>
+            <input type="text" id="ShippingAddress_CountryIso" name="ShippingAddress.CountryIso" class="form-control" required maxlength="2" placeholder="US" />
+        </div>
+        <button type="submit" class="btn btn-primary mt-2">Set Shipping Address</button>
+    </form>
 }
-
-<h3>Order Summary</h3>
-<table class="table">
-    <thead>
-        <tr>
-            <th>Product</th>
-            <th>Price</th>
-            <th>Quantity</th>
-            <th>Subtotal</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model.Cart.Items)
+else
+{
+    <h3>Shipping Address</h3>
+    <p>
+        @Model.ShippingAddress.AddressLine1<br />
+        @if (!string.IsNullOrEmpty(Model.ShippingAddress.AddressLine2))
         {
-            <tr>
-                <td>@item.Product.Name</td>
-                <td>@item.Product.Price.ToString("C")</td>
-                <td>@item.Quantity</td>
-                <td>@((item.Product.Price * item.Quantity).ToString("C"))</td>
-            </tr>
+            @Model.ShippingAddress.AddressLine2
+
+            <br />
         }
-    </tbody>
-</table>
+        @Model.ShippingAddress.City, @Model.ShippingAddress.StateRegion @Model.ShippingAddress.PostalCode<br />
+        @Model.ShippingAddress.CountryIso
+    </p>
+    <a asp-action="EditShippingAddress" class="btn btn-secondary mb-3">Edit Shipping Address</a>
 
-<p><strong>Cart Total (without shipping):</strong> @Model.OrderTotal.ToString("C")</p>
-<p><strong>Shipping Charge:</strong> @Model.ShippingAmount.ToString("C")</p>
-<p><strong>Grand Total:</strong> @((Model.OrderTotal + Model.ShippingAmount).ToString("C"))</p>
+    <!-- Order Summary and Shipping Options -->
+    <h3>Order Summary</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Cart.Items)
+            {
+                <tr>
+                    <td>@item.Product.Name</td>
+                    <td>@item.Product.Price.ToString("C")</td>
+                    <td>@item.Quantity</td>
+                    <td>@((item.Product.Price * item.Quantity).ToString("C"))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
 
-<h3>Shipping Options</h3>
-<form method="post" asp-action="Checkout" class="mt-3">
-    @Html.AntiForgeryToken()
-    <div class="form-group">
-        <label for="SelectedShippingMethod">Select a shipping method:</label>
-        <select id="SelectedShippingMethod" name="SelectedShippingMethod" class="form-select" asp-items="Model.ShippingOptions">
-        </select>
-    </div>
-    <div class="form-group mt-3">
-        <button type="submit" class="btn btn-primary">Place Order</button>
-    </div>
-</form>
+    <p><strong>Cart Total (without shipping):</strong> @Model.OrderTotal.ToString("C")</p>
+    <p><strong>Shipping Charge:</strong> @Model.ShippingAmount.ToString("C")</p>
+    <p><strong>Grand Total:</strong> @((Model.OrderTotal + Model.ShippingAmount).ToString("C"))</p>
+
+    <h3>Shipping Options</h3>
+    <form method="post" asp-action="Checkout" class="mt-3">
+        @Html.AntiForgeryToken()
+        <div class="form-group">
+            <label for="SelectedShippingMethod">Select a shipping method:</label>
+            <select id="SelectedShippingMethod" name="SelectedShippingMethod" class="form-select" asp-items="Model.ShippingOptions">
+            </select>
+        </div>
+        <div class="form-group mt-3">
+            <button type="submit" class="btn btn-primary">Place Order</button>
+        </div>
+    </form>
+}

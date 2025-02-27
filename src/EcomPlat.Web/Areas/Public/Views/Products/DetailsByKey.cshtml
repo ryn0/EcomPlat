@@ -34,8 +34,15 @@
             }
             <dt class="col-sm-4">Company</dt>
             <dd class="col-sm-8">@Model.Company?.Name</dd>
+
             <dt class="col-sm-4">Country of Origin</dt>
-            <dd class="col-sm-8">@EcomPlat.Utilities.Helpers.CountryHelper.GetCountryName(Model.CountryOfOrigin)</dd>
+            <dd class="col-sm-8">
+                @EcomPlat.Utilities.Helpers.CountryHelper.GetCountryName(Model.CountryOfOrigin)
+                <img src="@(Url.Content("~/images/flags/" + Model.CountryOfOrigin.ToLower() + ".png"))"
+                     alt="@Model.CountryOfOrigin"
+                     class="@Model.CountryOfOrigin.ToLower()" />
+            </dd>
+
             <dt class="col-sm-4">Category</dt>
             <dd class="col-sm-8">
                 @if (Model.Subcategory?.Category != null)
@@ -70,7 +77,6 @@
             <dd class="col-sm-8">@(Model.IsAvailable ? "Yes" : "No")</dd>
         </dl>
         <p>@Model.Description</p>
-
 
         <form asp-area="Public" asp-controller="ShoppingCart" asp-action="AddToCart" method="post">
             <input type="hidden" name="productId" value="@Model.ProductId" />

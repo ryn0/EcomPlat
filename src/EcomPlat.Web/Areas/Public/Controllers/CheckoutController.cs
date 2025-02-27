@@ -1,5 +1,10 @@
-﻿using EcomPlat.Data.DbContextInfo;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+using EcomPlat.Data.Constants;
+using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Enums;
+using EcomPlat.Data.Models;
 using EcomPlat.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -22,38 +27,34 @@ namespace EcomPlat.Web.Areas.Public.Controllers
         [HttpGet("")]
         public async Task<IActionResult> Index()
         {
-            // Use session to identify the cart
+            // Ensure the session is created.
+            this.HttpContext.Session.Set("Init", new byte[] { 1 });
             string sessionId = this.HttpContext.Session.Id;
 
-            // Load the cart (include products for order summary)
             var cart = await this.context.ShoppingCarts
                 .Include(c => c.Items)
                     .ThenInclude(i => i.Product)
                 .FirstOrDefaultAsync(c => c.SessionId == sessionId);
 
-            // If no cart exists or it's empty, redirect to products page.
             if (cart == null || !cart.Items.Any())
             {
                 return this.RedirectToAction("Index", "Products", new { area = "Public" });
             }
 
-            // Calculate the order total
             decimal orderTotal = cart.Items.Sum(i => i.Product.Price * i.Quantity);
 
-            // Create shipping options from the ShippingMethod enum.
             var shippingOptions = Enum.GetValues(typeof(ShippingMethod))
                 .Cast<ShippingMethod>()
                 .Select(sm => new SelectListItem
                 {
                     Value = sm.ToString(),
                     Text = sm.ToString()
-                }).ToList();
+                })
+                .ToList();
 
-            // Set a default shipping method (for example, Standard) and shipping amount.
             ShippingMethod defaultShipping = ShippingMethod.Standard;
             decimal shippingAmount = this.CalculateShippingCharge(defaultShipping, orderTotal);
 
-            // Build the view model.
             var viewModel = new CheckoutViewModel
             {
                 Cart = cart,
@@ -71,6 +72,25 @@ namespace EcomPlat.Web.Areas.Public.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Checkout(CheckoutViewModel model)
         {
+            // Reload the cart to ensure up-to-date product stock levels.
+            string sessionId = this.HttpContext.Session.Id;
+            model.Cart = await this.context.ShoppingCarts
+                .Include(c => c.Items)
+                    .ThenInclude(i => i.Product)
+                .FirstOrDefaultAsync(c => c.SessionId == sessionId);
+
+            // Validate each cart item against product stock.
+            foreach (var item in model.Cart.Items)
+            {
+                var product = await this.context.Products
+                    .FirstOrDefaultAsync(p => p.ProductId == item.ProductId);
+                if (product != null && item.Quantity > product.StockQuantity)
+                {
+                    this.ModelState.AddModelError("",
+                        $"The quantity for {product.Name} exceeds available stock. Available: {product.StockQuantity}");
+                }
+            }
+
             if (!this.ModelState.IsValid)
             {
                 // Rebuild shipping options if there's an error.
@@ -81,36 +101,28 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                         Value = sm.ToString(),
                         Text = sm.ToString(),
                         Selected = sm == model.SelectedShippingMethod
-                    }).ToList();
+                    })
+                    .ToList();
                 return this.View(model);
             }
 
-            // TODO: Create an Order from the ShoppingCart, set shipping info, process payment, etc.
-            // For now, simply redirect to a confirmation page (or home page).
-
-            // Clear the shopping cart after order is placed (if needed)
-            // Example:
-            // var cart = await this.context.ShoppingCarts.FirstOrDefaultAsync(c => c.SessionId == this.HttpContext.Session.Id);
-            // this.context.ShoppingCarts.Remove(cart);
-            // await this.context.SaveChangesAsync();
+            // TODO: Process the order (create Order record, process payment, etc.)
 
             return this.RedirectToAction("OrderConfirmation", "Checkout", new { area = "Public" });
         }
 
-        // Helper method to calculate shipping charges based on the shipping method and order total.
+        /// <summary>
+        /// Calculates shipping charges based on the shipping method and order total.
+        /// </summary>
         private decimal CalculateShippingCharge(ShippingMethod shippingMethod, decimal orderTotal)
         {
-            // For demonstration, simple logic:
-            switch (shippingMethod)
+            return shippingMethod switch
             {
-                case ShippingMethod.Express:
-                    return 15.00m;
-                case ShippingMethod.Overnight:
-                    return 25.00m;
-                case ShippingMethod.Standard:
-                default:
-                    return 5.00m;
-            }
+                ShippingMethod.Express => 15.00m,
+                ShippingMethod.Overnight => 25.00m,
+                ShippingMethod.Standard => 5.00m,
+                _ => 5.00m,
+            };
         }
     }
 }

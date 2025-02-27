@@ -45,7 +45,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
 
             // 2. Base query: only available products
             var query = this.context.Products
-                .Include(p => p.Images)
+                .Include(p => p.Images.Where(x => x.IsMain == true))
                 .Include(p => p.Subcategory)
                     .ThenInclude(s => s.Category)
                 .Include(p => p.Company)

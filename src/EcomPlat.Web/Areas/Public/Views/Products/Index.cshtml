@@ -39,7 +39,6 @@
                 </div>
             </li>
 
-
             @foreach (var cat in allCategories)
             {
                 bool isCatSelected = (cat.CategoryKey == selectedCategoryKey);
@@ -51,7 +50,7 @@
                            asp-controller="Products"
                            asp-action="Index"
                            asp-route-categoryKey="@cat.CategoryKey"
-                           asp-route-subCategoryKey=""  
+                           asp-route-subCategoryKey=""
                            class="text-decoration-none @(isCatSelected ? "text-white" : "text-dark")">
                             @cat.Name
                         </a>
@@ -88,11 +87,11 @@
         <!-- Sort row -->
         @{
             var sortOptions = new List<SelectListItem>
-            {
-                new SelectListItem { Value = "", Text = "Default", Selected = string.IsNullOrEmpty(sortOrder) },
-                new SelectListItem { Value = "priceAsc", Text = "Price: Low to High", Selected = sortOrder == "priceAsc" },
-                new SelectListItem { Value = "priceDesc", Text = "Price: High to Low", Selected = sortOrder == "priceDesc" }
-            };
+        {
+        new SelectListItem { Value = "", Text = "Default", Selected = string.IsNullOrEmpty(sortOrder) },
+        new SelectListItem { Value = "priceAsc", Text = "Price: Low to High", Selected = sortOrder == "priceAsc" },
+        new SelectListItem { Value = "priceDesc", Text = "Price: High to Low", Selected = sortOrder == "priceDesc" }
+        };
         }
         <form method="get"
               asp-area="Public"
@@ -141,13 +140,29 @@
                         <div class="card-body d-flex flex-column">
                             <h5 class="card-title">@product.Name</h5>
                             <p class="card-text">@product.Price.ToString("C")</p>
-                            <a asp-area="Public"
-                               asp-controller="Products"
-                               asp-action="DetailsByKey"
-                               asp-route-productKey="@product.ProductKey"
-                               class="btn btn-primary btn-sm mt-auto">
-                                View
-                            </a>
+
+                            <!-- Align buttons at the bottom (mt-auto) and place them on opposite ends (justify-content-between) -->
+                            <div class="mt-auto d-flex justify-content-between align-items-center">
+                                <!-- View button (left) -->
+                                <a asp-area="Public"
+                                   asp-controller="Products"
+                                   asp-action="DetailsByKey"
+                                   asp-route-productKey="@product.ProductKey"
+                                   class="btn btn-primary btn-sm">
+                                    View
+                                </a>
+
+                                <!-- Add to Cart button (right) -->
+                                <form method="post"
+                                      asp-area="Public"
+                                      asp-controller="ShoppingCart"
+                                      asp-action="AddToCart"
+                                      class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="productId" value="@product.ProductId" />
+                                    <button type="submit" class="btn btn-success btn-sm">Add to Cart</button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -167,7 +182,7 @@
                        asp-route-page="@(currentPage - 1)"
                        asp-route-pageSize="@(pageSize)"
                        asp-route-sortOrder="@sortOrder">
-                       Previous
+                        Previous
                     </a>
                 </li>
                 @for (int i = 1; i <= totalPages; i++)
@@ -182,7 +197,7 @@
                            asp-route-page="@i"
                            asp-route-pageSize="@(pageSize)"
                            asp-route-sortOrder="@sortOrder">
-                           @i
+                            @i
                         </a>
                     </li>
                 }
@@ -196,7 +211,7 @@
                        asp-route-page="@(currentPage + 1)"
                        asp-route-pageSize="@(pageSize)"
                        asp-route-sortOrder="@sortOrder">
-                       Next
+                        Next
                     </a>
                 </li>
             </ul>

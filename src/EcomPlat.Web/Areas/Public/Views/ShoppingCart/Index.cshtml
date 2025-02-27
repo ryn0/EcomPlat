@@ -11,6 +11,7 @@
     <table class="table">
         <thead>
             <tr>
+                <th>Image</th>
                 <th>Product</th>
                 <th>Price</th>
                 <th>Quantity</th>
@@ -22,6 +23,19 @@
             @foreach (var item in Model.Items)
             {
                 <tr>
+                    <td>
+                        @{
+                            var smallImage = item.Product.Images.FirstOrDefault(i => i.Size == EcomPlat.Data.Enums.ImageSize.Small);
+                        }
+                        @if (smallImage != null)
+                        {
+                            <img src="@smallImage.ImageUrl" alt="@item.Product.Name" style="width:60px; height:60px; object-fit:cover;" />
+                        }
+                        else
+                        {
+                            <span>No image</span>
+                        }
+                    </td>
                     <td>@item.Product.Name</td>
                     <td>@item.Product.Price.ToString("C")</td>
                     <td>
@@ -33,7 +47,7 @@
                             <button type="submit" name="action" value="increase" class="btn btn-sm btn-secondary ms-1">+</button>
                         </form>
                     </td>
-                    <td>@(item.Product.Price * item.Quantity).ToString("C")</td>
+                    <td>@((item.Product.Price * item.Quantity).ToString("C"))</td>
                     <td>
                         <!-- Form to remove the item -->
                         <form method="post" asp-area="Public" asp-controller="ShoppingCart" asp-action="RemoveItem">
@@ -45,6 +59,13 @@
             }
         </tbody>
     </table>
+
+    <!-- Proceed to Checkout Button -->
+    <div class="mt-3">
+        <a asp-area="Public" asp-controller="Checkout" asp-action="Index" class="btn btn-success">
+            Proceed to Checkout
+        </a>
+    </div>
 }
 else
 {

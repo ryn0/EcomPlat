@@ -125,8 +125,16 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 try
                 {
-                    product.UpdatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
-                    this.context.Update(product);
+                    var existingProduct = await this.context.Products.FindAsync(id);
+                    if (existingProduct == null)
+                    {
+                        return this.NotFound();
+                    }
+
+                    existingProduct.UpdatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
+                    this.UpdateProductFields(existingProduct, product);
+
+                    this.context.Update(existingProduct);
                     await this.context.SaveChangesAsync();
 
                     await this.ProcessProductImageUploads(product, productImages);
@@ -370,6 +378,31 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             });
 
             this.ViewBag.CompanyId = new SelectList(list, "CompanyId", "Name", selectedId);
+        }
+
+        /// <summary>
+        /// Updates the fields on the existing product with values from the new product.
+        /// </summary>
+        /// <param name="existingProduct">The product loaded from the database.</param>
+        /// <param name="newProduct">The new product values from the form.</param>
+        private void UpdateProductFields(Product existingProduct, Product newProduct)
+        {
+            existingProduct.Name = newProduct.Name;
+            existingProduct.ProductKey = StringHelpers.UrlKey(newProduct.Name);
+            existingProduct.Description = newProduct.Description;
+            existingProduct.Price = newProduct.Price;
+            existingProduct.SalePrice = newProduct.SalePrice;
+            existingProduct.IsAvailable = newProduct.IsAvailable;
+            existingProduct.ProductWeightOunces = newProduct.ProductWeightOunces;
+            existingProduct.ShippingWeightOunces = newProduct.ShippingWeightOunces;
+            existingProduct.HeightInches = newProduct.HeightInches;
+            existingProduct.WidthInches = newProduct.WidthInches;
+            existingProduct.LengthInches = newProduct.LengthInches;
+            existingProduct.StockQuantity = newProduct.StockQuantity;
+            existingProduct.SubcategoryId = newProduct.SubcategoryId;
+            existingProduct.CompanyId = newProduct.CompanyId;
+            existingProduct.Upc = newProduct.Upc;
+            existingProduct.Sku = newProduct.Sku;
         }
 
         /// <summary>

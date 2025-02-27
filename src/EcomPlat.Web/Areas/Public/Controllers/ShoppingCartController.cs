@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EcomPlat.Web.Areas.Public.Controllers
 {
-    [Area(Constants.StringConstants.PublicArea)]
+    [Area("Public")]
     [Route("cart")]
     public class ShoppingCartController : Controller
     {
@@ -22,12 +22,12 @@ namespace EcomPlat.Web.Areas.Public.Controllers
         [HttpGet("")]
         public async Task<IActionResult> Index()
         {
-            // For anonymous users, use the session ID.
             string sessionId = this.HttpContext.Session.Id;
 
             var cart = await this.context.ShoppingCarts
-                .Include(c => c.Items)
+                    .Include(c => c.Items)
                     .ThenInclude(i => i.Product)
+                    .ThenInclude(i => i.Images)
                 .FirstOrDefaultAsync(c => c.SessionId == sessionId);
 
             if (cart == null)
@@ -44,10 +44,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
         [HttpPost("add")]
         public async Task<IActionResult> AddToCart(int productId, int quantity = 1)
         {
-            // Force the session to be created by setting a dummy value.
             this.HttpContext.Session.Set("Init", [1]);
-
-            // Now retrieve the session ID.
             string sessionId = this.HttpContext.Session.Id;
 
             var cart = await this.context.ShoppingCarts
@@ -78,8 +75,46 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             }
 
             await this.context.SaveChangesAsync();
+            return this.RedirectToAction("Index", "ShoppingCart", new { area = "Public" });
+        }
 
-            // Redirect back to the shopping cart view.
+        // POST: /cart/update
+        [HttpPost("update")]
+        public async Task<IActionResult> UpdateItem(int cartItemId, int quantity, string action)
+        {
+            var item = await this.context.ShoppingCartItems.FirstOrDefaultAsync(i => i.ShoppingCartItemId == cartItemId);
+            if (item == null)
+            {
+                return this.NotFound();
+            }
+
+            if (action == "increase")
+            {
+                item.Quantity++;
+            }
+            else if (action == "decrease")
+            {
+                if (item.Quantity > 1)
+                {
+                    item.Quantity--;
+                }
+            }
+
+            await this.context.SaveChangesAsync();
+            // Redirect back to the cart.
+            return this.RedirectToAction("Index", "ShoppingCart", new { area = "Public" });
+        }
+
+        // POST: /cart/remove
+        [HttpPost("remove")]
+        public async Task<IActionResult> RemoveItem(int cartItemId)
+        {
+            var item = await this.context.ShoppingCartItems.FirstOrDefaultAsync(i => i.ShoppingCartItemId == cartItemId);
+            if (item != null)
+            {
+                this.context.ShoppingCartItems.Remove(item);
+                await this.context.SaveChangesAsync();
+            }
             return this.RedirectToAction("Index", "ShoppingCart", new { area = "Public" });
         }
     }

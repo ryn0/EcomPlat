@@ -32,8 +32,6 @@ namespace EcomPlat.Data.Models
         [EmailAddress]
         public string CustomerEmail { get; set; }
 
-        // Sale and payment details
-
         /// <summary>
         /// Gets or sets the sale price of the order, which is the billed amount before any shipping or additional fees.
         /// </summary>
@@ -76,6 +74,15 @@ namespace EcomPlat.Data.Models
         /// Gets or sets the shipping charge applied to the order.
         /// </summary>
         public decimal ShippingAmount { get; set; }
+
+        public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Unknown;
+
+        public ShippingStatus ShippingStatus { get; set; } = ShippingStatus.Unknown;
+
+        public ShippingCarrier ShippingCarrier { get; set; } = ShippingCarrier.Unknown;
+
+        [MaxLength(100)]
+        public string ShipmentTrackingId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the shipping method selected (e.g., Standard, Express, Overnight).

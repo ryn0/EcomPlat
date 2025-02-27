@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\EcomPlat.Data\EcomPlat.Data.csproj" />
     <ProjectReference Include="..\EcomPlat.FileStorage\EcomPlat.FileStorage.csproj" />
+    <ProjectReference Include="..\EcomPlat.Shipping\EcomPlat.Shipping.csproj" />
     <ProjectReference Include="..\EcomPlat.Utilities\EcomPlat.Utilities.csproj" />
   </ItemGroup>
 

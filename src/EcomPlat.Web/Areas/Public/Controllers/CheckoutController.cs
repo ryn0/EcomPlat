@@ -1,10 +1,7 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using EcomPlat.Data.Constants;
-using EcomPlat.Data.DbContextInfo;
+﻿using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Enums;
 using EcomPlat.Data.Models;
+using EcomPlat.Shipping.Validation;
 using EcomPlat.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -82,8 +79,24 @@ namespace EcomPlat.Web.Areas.Public.Controllers
         // POST: /checkout/set-address
         [HttpPost("set-address")]
         [ValidateAntiForgeryToken]
-        public IActionResult SetShippingAddress(CheckoutViewModel model)
+        public async Task<IActionResult> SetShippingAddressAsync(CheckoutViewModel model)
         {
+            var apiKey = await this.context.ConfigSettings.FirstOrDefaultAsync(cs => cs.SiteConfigSetting == SiteConfigSetting.EasyPostApiKey);
+            AddressValidator.Initialize(apiKey.Content);
+            var validationResult = await AddressValidator.ValidateAddressAsync(
+                model.ShippingAddress.AddressLine1,
+                model.ShippingAddress?.AddressLine2,
+                model.ShippingAddress.City,
+                model.ShippingAddress.StateRegion,
+                model.ShippingAddress.PostalCode,
+                model.ShippingAddress.CountryIso);
+
+            if (validationResult.IsValid = false)
+            {
+                return View(model);
+            }
+
+
             // Here you could add additional server‐side validation for the address.
             this.TempData["ShippingAddress"] = JsonConvert.SerializeObject(model.ShippingAddress);
             return this.RedirectToAction("Index");

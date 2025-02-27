@@ -29,6 +29,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CI", "CI", "{81FCEBEA-13B1-
 		..\CI-Tools\Scripts\GeneralHelperFunctions.ps1 = ..\CI-Tools\Scripts\GeneralHelperFunctions.ps1
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcomPlat.Shipping", "EcomPlat.Shipping\EcomPlat.Shipping.csproj", "{A03FB1C6-982A-45B0-89F9-F3D1F1DC3DDC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,10 @@ Global
 		{33EA8FB9-993A-4F8D-A2BD-D7AA75A1C7EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{33EA8FB9-993A-4F8D-A2BD-D7AA75A1C7EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{33EA8FB9-993A-4F8D-A2BD-D7AA75A1C7EE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A03FB1C6-982A-45B0-89F9-F3D1F1DC3DDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A03FB1C6-982A-45B0-89F9-F3D1F1DC3DDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A03FB1C6-982A-45B0-89F9-F3D1F1DC3DDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A03FB1C6-982A-45B0-89F9-F3D1F1DC3DDC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

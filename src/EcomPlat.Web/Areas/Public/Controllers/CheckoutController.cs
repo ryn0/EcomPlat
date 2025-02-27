@@ -21,24 +21,98 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             this.context = context;
         }
 
+        // GET: /checkout/shipping-address
+        [HttpGet("shipping-address")]
+        public IActionResult ShippingAddress()
+        {
+            // If a shipping address has already been set, redirect to checkout.
+            var shippingAddressJson = this.TempData.Peek("ShippingAddress") as string;
+            if (!string.IsNullOrEmpty(shippingAddressJson))
+            {
+                return this.RedirectToAction("Index");
+            }
+            return this.View();
+        }
+
+        // POST: /checkout/shipping-address
+        [HttpPost("shipping-address")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ShippingAddress(OrderAddress address)
+        {
+            // Remove any ModelState errors for properties not needed in this context.
+            this.ModelState.Remove("Order");
+            this.ModelState.Remove("OrderId");
+            this.ModelState.Remove("CountryIso");
+
+            // Retrieve the EasyPost API key from configuration.
+            var apiKeySetting = await this.context.ConfigSettings
+                .FirstOrDefaultAsync(cs => cs.SiteConfigSetting == SiteConfigSetting.EasyPostApiKey);
+
+            if (apiKeySetting == null || string.IsNullOrEmpty(apiKeySetting.Content))
+            {
+                this.ModelState.AddModelError("", "Shipping configuration error.");
+            }
+            else
+            {
+                // Initialize EasyPost.
+                AddressValidator.Initialize(apiKeySetting.Content);
+                var validationResult = await AddressValidator.ValidateAddressAsync(
+                    address.AddressLine1,
+                    address.AddressLine2,
+                    address.City,
+                    address.StateRegion,
+                    address.PostalCode,
+                    address.CountryIso);
+
+                if (!validationResult.IsValid)
+                {
+                    // If no error message is provided, use a default one.
+                    var errorMsg = string.IsNullOrWhiteSpace(validationResult.ErrorMessage)
+                        ? "Address validation failed."
+                        : "Address validation failed: " + validationResult.ErrorMessage;
+                    this.ModelState.AddModelError("", errorMsg);
+                }
+                else
+                {
+                    // Use the verified address values.
+                    address.AddressLine1 = validationResult.VerifiedAddress.Street1;
+                    address.AddressLine2 = validationResult.VerifiedAddress.Street2;
+                    address.City = validationResult.VerifiedAddress.City;
+                    address.StateRegion = validationResult.VerifiedAddress.State;
+                    address.PostalCode = validationResult.VerifiedAddress.Zip;
+                    address.CountryIso = validationResult.VerifiedAddress.Country;
+                    address.AddressType = AddressType.Shipping;
+                }
+            }
+
+            if (!this.ModelState.IsValid)
+            {
+                return this.View(address);
+            }
+
+            // Save the validated shipping address in TempData.
+            this.TempData["ShippingAddress"] = JsonConvert.SerializeObject(address);
+            return this.RedirectToAction("Index");
+        }
+
+
         // GET: /checkout
         [HttpGet("")]
         public async Task<IActionResult> Index()
         {
-            // Force session creation.
+            // Ensure session exists.
             this.HttpContext.Session.Set("Init", new byte[] { 1 });
             string sessionId = this.HttpContext.Session.Id;
 
+            // Load the shopping cart.
             var cart = await this.context.ShoppingCarts
                 .Include(c => c.Items)
                     .ThenInclude(i => i.Product)
                 .FirstOrDefaultAsync(c => c.SessionId == sessionId);
-
             if (cart == null || !cart.Items.Any())
             {
                 return this.RedirectToAction("Index", "Products", new { area = "Public" });
             }
-
             decimal orderTotal = cart.Items.Sum(i => i.Product.Price * i.Quantity);
 
             var shippingOptions = Enum.GetValues(typeof(ShippingMethod))
@@ -49,7 +123,6 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                     Text = sm.ToString()
                 })
                 .ToList();
-
             ShippingMethod defaultShipping = ShippingMethod.Standard;
             decimal shippingAmount = this.CalculateShippingCharge(defaultShipping, orderTotal);
 
@@ -62,7 +135,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 ShippingAmount = shippingAmount
             };
 
-            // Load any saved shipping address from this.TempData.
+            // Load shipping address from TempData.
             var shippingAddressJson = this.TempData.Peek("ShippingAddress") as string;
             if (!string.IsNullOrEmpty(shippingAddressJson))
             {
@@ -70,45 +143,20 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             }
             else
             {
-                viewModel.ShippingAddress = new OrderAddress();
+                // If no shipping address is set, redirect to shipping address input.
+                return this.RedirectToAction("ShippingAddress");
             }
 
             return this.View(viewModel);
-        }
-
-        // POST: /checkout/set-address
-        [HttpPost("set-address")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SetShippingAddressAsync(CheckoutViewModel model)
-        {
-            var apiKey = await this.context.ConfigSettings.FirstOrDefaultAsync(cs => cs.SiteConfigSetting == SiteConfigSetting.EasyPostApiKey);
-            AddressValidator.Initialize(apiKey.Content);
-            var validationResult = await AddressValidator.ValidateAddressAsync(
-                model.ShippingAddress.AddressLine1,
-                model.ShippingAddress?.AddressLine2,
-                model.ShippingAddress.City,
-                model.ShippingAddress.StateRegion,
-                model.ShippingAddress.PostalCode,
-                model.ShippingAddress.CountryIso);
-
-            if (validationResult.IsValid = false)
-            {
-                return View(model);
-            }
-
-
-            // Here you could add additional server‐side validation for the address.
-            this.TempData["ShippingAddress"] = JsonConvert.SerializeObject(model.ShippingAddress);
-            return this.RedirectToAction("Index");
         }
 
         // GET: /checkout/edit-address
         [HttpGet("edit-address")]
         public IActionResult EditShippingAddress()
         {
-            // Clear the saved shipping address so the form will be displayed again.
+            // Remove the saved address so the user can re-enter.
             this.TempData.Remove("ShippingAddress");
-            return this.RedirectToAction("Index");
+            return this.RedirectToAction("ShippingAddress");
         }
 
         // POST: /checkout
@@ -122,15 +170,13 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                     .ThenInclude(i => i.Product)
                 .FirstOrDefaultAsync(c => c.SessionId == sessionId);
 
-            // Validate each cart item against product stock.
+            // Validate each cart item against stock.
             foreach (var item in model.Cart.Items)
             {
-                var product = await this.context.Products
-                    .FirstOrDefaultAsync(p => p.ProductId == item.ProductId);
+                var product = await this.context.Products.FirstOrDefaultAsync(p => p.ProductId == item.ProductId);
                 if (product != null && item.Quantity > product.StockQuantity)
                 {
-                    this.ModelState.AddModelError("",
-                        $"The quantity for {product.Name} exceeds available stock. Available: {product.StockQuantity}");
+                    this.ModelState.AddModelError("", $"The quantity for {product.Name} exceeds available stock. Available: {product.StockQuantity}");
                 }
             }
 
@@ -148,13 +194,11 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 return this.View(model);
             }
 
-            // TODO: Process the order (create Order record, process payment, etc.)
+            // TODO: Process the order (create order record, process payment, etc.)
+
             return this.RedirectToAction("OrderConfirmation", "Checkout", new { area = "Public" });
         }
 
-        /// <summary>
-        /// Calculates shipping charges based on the shipping method and order total.
-        /// </summary>
         private decimal CalculateShippingCharge(ShippingMethod shippingMethod, decimal orderTotal)
         {
             return shippingMethod switch

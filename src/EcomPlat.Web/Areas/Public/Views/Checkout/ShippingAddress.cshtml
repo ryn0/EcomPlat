@@ -1,0 +1,70 @@
+﻿@using EcomPlat.Utilities.Models
+@model EcomPlat.Data.Models.OrderAddress
+
+@{
+    ViewData["Title"] = "Enter Shipping Address";
+    var states = EcomPlat.Utilities.Helpers.StateHelper.GetStates() ?? Enumerable.Empty<StateInfo>();
+    // Use a local variable to avoid null references.
+    var shippingAddress = Model ?? new EcomPlat.Data.Models.OrderAddress();
+    var selectedState = shippingAddress.StateRegion ?? "";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
+}
+
+<form method="post" asp-action="ShippingAddress" class="mb-3">
+    @Html.AntiForgeryToken()
+    <div class="form-group">
+        <label for="Name">Name</label>
+        <input type="text" id="Name" name="Name" class="form-control" value="@shippingAddress.Name" required />
+        @Html.ValidationMessageFor(m => m.Name, "", new { @class = "text-danger" })
+    </div>
+    <div class="form-group">
+        <label for="AddressLine1">Address Line 1</label>
+        <input type="text" id="AddressLine1" name="AddressLine1" class="form-control" value="@shippingAddress.AddressLine1" required />
+        @Html.ValidationMessageFor(m => m.AddressLine1, "", new { @class = "text-danger" })
+    </div>
+    <div class="form-group">
+        <label for="AddressLine2">Address Line 2</label>
+        <input type="text" id="AddressLine2" name="AddressLine2" class="form-control" value="@shippingAddress.AddressLine2" />
+    </div>
+    <div class="form-group">
+        <label for="City">City</label>
+        <input type="text" id="City" name="City" class="form-control" value="@shippingAddress.City" required />
+        @Html.ValidationMessageFor(m => m.City, "", new { @class = "text-danger" })
+    </div>
+    <div class="form-group">
+        <label for="StateRegion">State</label>
+        <select id="StateRegion" name="StateRegion" class="form-control" required>
+            <option value="">-- Select --</option>
+            @foreach (var state in states)
+            {
+                if (state.Code == selectedState)
+                {
+                    <option value="@state.Code" selected="selected">@state.Name</option>
+                }
+                else
+                {
+                    <option value="@state.Code">@state.Name</option>
+                }
+            }
+        </select>
+        @Html.ValidationMessageFor(m => m.StateRegion, "", new { @class = "text-danger" })
+    </div>
+    <div class="form-group">
+        <label for="PostalCode">Zip Code</label>
+        <input type="text" id="PostalCode" name="PostalCode" class="form-control" value="@shippingAddress.PostalCode" required />
+        @Html.ValidationMessageFor(m => m.PostalCode, "", new { @class = "text-danger" })
+    </div>
+    <div class="form-group">
+        <label for="CountryIso">Country</label>
+        <!-- Use readonly only (do not disable) so that the value is posted -->
+        <input readonly type="text" id="CountryIso" name="CountryIso" class="form-control" required maxlength="2" value="US" />
+        @Html.ValidationMessageFor(m => m.CountryIso, "", new { @class = "text-danger" })
+    </div>
+    <button type="submit" class="btn btn-primary mt-2">Set Shipping Address</button>
+</form>

@@ -9,6 +9,8 @@ using EcomPlat.Data.Enums;
 using EcomPlat.Data.Models;
 using EcomPlat.FileStorage.Repositories.Implementations;
 using EcomPlat.FileStorage.Repositories.Interfaces;
+using EcomPlat.Shipping.Services.Implementaions;
+using EcomPlat.Shipping.Services.Interfaces;
 using EcomPlat.Utilities.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -58,6 +60,19 @@ namespace EcomPlat.Web.Extensions
                     var azureStorageConnection = cacheService.GetSnippet(SiteConfigSetting.AzureStorageConnectionString);
                     var blobServiceClient = new BlobServiceClient(azureStorageConnection);
                     return await BlobService.CreateAsync(blobServiceClient);
+                }).GetAwaiter().GetResult();
+            });
+
+            // Register BlobService singleton using async initialization (adjust as needed)
+            services.AddTransient<IShippingCostCalculator>(provider =>
+            {
+                return Task.Run(() =>
+                {
+                    using var scope = provider.CreateScope();
+                    var cacheService = scope.ServiceProvider.GetRequiredService<ICacheService>();
+                    var easyPostApiKey = cacheService.GetSnippet(SiteConfigSetting.EasyPostApiKey);
+
+                    return new ShippingCostCalculator(easyPostApiKey);
                 }).GetAwaiter().GetResult();
             });
 

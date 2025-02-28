@@ -1,6 +1,8 @@
 ﻿using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Enums;
 using EcomPlat.Data.Models;
+using EcomPlat.Shipping.Models;
+using EcomPlat.Shipping.Services.Interfaces;
 using EcomPlat.Shipping.Validation;
 using EcomPlat.Web.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -15,10 +17,14 @@ namespace EcomPlat.Web.Areas.Public.Controllers
     public class CheckoutController : Controller
     {
         private readonly ApplicationDbContext context;
+        private readonly IShippingCostCalculator shippingCostCalculator;
 
-        public CheckoutController(ApplicationDbContext context)
+        public CheckoutController(
+            ApplicationDbContext context,
+            IShippingCostCalculator shippingCostCalculator)
         {
             this.context = context;
+            this.shippingCostCalculator = shippingCostCalculator;
         }
 
         // GET: /checkout/shipping-address
@@ -37,7 +43,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
         // POST: /checkout/shipping-address
         [HttpPost("shipping-address")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ShippingAddress(OrderAddress address)
+        public async Task<IActionResult> ShippingAddress(Data.Models.OrderAddress address)
         {
             // Remove any ModelState errors for properties not needed in this context.
             this.ModelState.Remove("Order");
@@ -113,33 +119,15 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             {
                 return this.RedirectToAction("Index", "Products", new { area = "Public" });
             }
-            decimal orderTotal = cart.Items.Sum(i => i.Product.Price * i.Quantity);
 
-            var shippingOptions = Enum.GetValues(typeof(ShippingMethod))
-                .Cast<ShippingMethod>()
-                .Select(sm => new SelectListItem
-                {
-                    Value = sm.ToString(),
-                    Text = sm.ToString()
-                })
-                .ToList();
-            ShippingMethod defaultShipping = ShippingMethod.Standard;
-            decimal shippingAmount = this.CalculateShippingCharge(defaultShipping, orderTotal);
-
-            var viewModel = new CheckoutViewModel
-            {
-                Cart = cart,
-                OrderTotal = orderTotal,
-                ShippingOptions = shippingOptions,
-                SelectedShippingMethod = defaultShipping,
-                ShippingAmount = shippingAmount
-            };
+            var viewModel = this.GetCheckoutModel(cart);
 
             // Load shipping address from TempData.
             var shippingAddressJson = this.TempData.Peek("ShippingAddress") as string;
             if (!string.IsNullOrEmpty(shippingAddressJson))
             {
-                viewModel.ShippingAddress = JsonConvert.DeserializeObject<OrderAddress>(shippingAddressJson);
+                var shippingCost = await this.GettingShippingCost(viewModel, shippingAddressJson);
+                // todo: display and store in session
             }
             else
             {
@@ -209,5 +197,82 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 _ => 5.00m,
             };
         }
+
+        private async Task<ShippingCostResult> GettingShippingCost(CheckoutViewModel viewModel, string? shippingAddressJson)
+        {
+            viewModel.ShippingAddress = JsonConvert.DeserializeObject<Data.Models.OrderAddress>(shippingAddressJson);
+
+            var shippingCart = new Shipping.Models.ShoppingCart();
+
+            foreach (var item in viewModel.Cart.Items)
+            {
+                shippingCart.Items.Add(new Shipping.Models.ShoppingCartItem()
+                {
+                    Product = new Shipping.Models.Product()
+                    {
+                        HeightInches = item.Product.HeightInches,
+                        LengthInches = item.Product.LengthInches,
+                        ShippingWeightOunces = item.Product.ShippingWeightOunces,
+                        WidthInches = item.Product.WidthInches,
+                    },
+                    Quantity = item.Quantity
+                });
+            }
+
+            return await this.shippingCostCalculator.CalculateShippingCostAsync(
+              shippingCart,
+              new EasyPost.Models.API.Address()
+                {
+                    City = viewModel.ShippingAddress.City,
+                    Country = viewModel.ShippingAddress.CountryIso,
+                    Name = viewModel.ShippingAddress.Name,
+                    State = viewModel.ShippingAddress.StateRegion,
+                    Street1 = viewModel.ShippingAddress.AddressLine1,
+                    Street2 = viewModel.ShippingAddress.AddressLine2,
+                    Zip = viewModel.ShippingAddress.PostalCode,
+
+                },
+                // TODO
+              new EasyPost.Models.API.Address()
+                {
+                    City = "",
+                    Country = "",
+                    Name = "",
+                    State = "",
+                    Street1 = "",
+                    Street2 = "",
+                    Zip = ""
+
+                });
+        }
+
+
+        private CheckoutViewModel GetCheckoutModel(Data.Models.ShoppingCart? cart)
+        {
+            decimal orderTotal = cart.Items.Sum(i => i.Product.Price * i.Quantity);
+
+            var shippingOptions = Enum.GetValues(typeof(ShippingMethod))
+                .Cast<ShippingMethod>()
+                .Select(sm => new SelectListItem
+                {
+                    Value = sm.ToString(),
+                    Text = sm.ToString()
+                })
+                .ToList();
+
+            ShippingMethod defaultShipping = ShippingMethod.Standard;
+            decimal shippingAmount = this.CalculateShippingCharge(defaultShipping, orderTotal); // todo: do not use this
+
+            var viewModel = new CheckoutViewModel
+            {
+                Cart = cart,
+                OrderTotal = orderTotal,
+                ShippingOptions = shippingOptions,
+                SelectedShippingMethod = defaultShipping,
+                ShippingAmount = shippingAmount
+            };
+            return viewModel;
+        }
+
     }
 }

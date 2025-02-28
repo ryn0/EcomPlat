@@ -27,5 +27,9 @@ namespace EcomPlat.Data.Models
         // Foreign key linking to the Supplier table.
         public int SupplierId { get; set; }
         public Supplier Supplier { get; set; }
+
+        public int? WarehouseId { get; set; }
+
+        public Warehouse Warehouse { get; set; }
     }
 }

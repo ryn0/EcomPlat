@@ -7,6 +7,7 @@ namespace EcomPlat.Data.DbContextInfo
     {
         DbSet<ApplicationUser> ApplicationUser { get; set; }
         DbSet<ApplicationUserRole> ApplicationUserRole { get; set; }
+        DbSet<BusinessDetails> BusinessDetails { get; set; }
         DbSet<Category> Categories { get; set; }
         DbSet<Company> Companies { get; set; }
         DbSet<ConfigSetting> ConfigSettings { get; set; }
@@ -20,6 +21,7 @@ namespace EcomPlat.Data.DbContextInfo
         DbSet<ShoppingCart> ShoppingCarts { get; set; }
         DbSet<Subcategory> Subcategories { get; set; }
         DbSet<Supplier> Suppliers { get; set; }
+        DbSet<Warehouse> Warehouses { get; set; }
 
         int SaveChanges();
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

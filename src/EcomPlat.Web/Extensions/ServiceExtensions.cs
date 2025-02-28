@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Azure.Storage.Blobs;
+﻿using Azure.Storage.Blobs;
 using DirectoryManager.Web.Services.Implementations; // If needed
 using DirectoryManager.Web.Services.Interfaces;
 using EcomPlat.Data.Constants;
@@ -9,15 +7,10 @@ using EcomPlat.Data.Enums;
 using EcomPlat.Data.Models;
 using EcomPlat.FileStorage.Repositories.Implementations;
 using EcomPlat.FileStorage.Repositories.Interfaces;
-using EcomPlat.Shipping.Services.Implementaions;
+using EcomPlat.Shipping.Services.Implementations;
 using EcomPlat.Shipping.Services.Interfaces;
-using EcomPlat.Utilities.Helpers;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 // using any additional namespaces
 
 namespace EcomPlat.Web.Extensions

@@ -19,24 +19,96 @@ namespace EcomPlat.Web.Areas.Public.Controllers
         private readonly ApplicationDbContext context;
         private readonly IShippingCostCalculator shippingCostCalculator;
 
-        public CheckoutController(
-            ApplicationDbContext context,
-            IShippingCostCalculator shippingCostCalculator)
+        public CheckoutController(ApplicationDbContext context, IShippingCostCalculator shippingCostCalculator)
         {
             this.context = context;
             this.shippingCostCalculator = shippingCostCalculator;
+        }
+
+        // GET: /checkout
+        [HttpGet("")]
+        public async Task<IActionResult> Index()
+        {
+            // Ensure session exists.
+            this.HttpContext.Session.Set("Init", [1]);
+            string sessionId = this.HttpContext.Session.Id;
+
+            // Load the shopping cart.
+            var cart = await this.context.ShoppingCarts
+                .Include(c => c.Items)
+                    .ThenInclude(i => i.Product)
+                .FirstOrDefaultAsync(c => c.SessionId == sessionId);
+            if (cart == null || !cart.Items.Any())
+            {
+                return this.RedirectToAction("Index", "Products", new { area = "Public" });
+            }
+
+            // Calculate order total.
+            decimal orderTotal = cart.Items.Sum(i => i.Product.Price * i.Quantity);
+
+            var shippingOptions = Enum.GetValues(typeof(ShippingMethod))
+                .Cast<ShippingMethod>()
+                .Select(sm => new SelectListItem
+                {
+                    Value = sm.ToString(),
+                    Text = sm.ToString()
+                })
+                .ToList();
+            ShippingMethod defaultShipping = ShippingMethod.Standard;
+
+            var viewModel = new CheckoutViewModel
+            {
+                Cart = cart,
+                OrderTotal = orderTotal,
+                ShippingOptions = shippingOptions,
+                SelectedShippingMethod = defaultShipping,
+                ShippingAddress = new OrderAddress() // default new address
+            };
+
+            // Load shipping address from TempData.
+            var shippingAddressJson = this.TempData.Peek("ShippingAddress") as string;
+            if (!string.IsNullOrEmpty(shippingAddressJson))
+            {
+                viewModel.ShippingAddress = JsonConvert.DeserializeObject<OrderAddress>(shippingAddressJson);
+            }
+            else
+            {
+                // If no shipping address is set, redirect to shipping address input.
+                return this.RedirectToAction("ShippingAddress");
+            }
+
+            // Retrieve the business shipping address from BusinessDetails.
+            var fromAddress = await this.SetBusinessAddress();
+
+            var toAddress = new EasyPost.Models.API.Address()
+            {
+                City = viewModel.ShippingAddress.City,
+                Country = viewModel.ShippingAddress.CountryIso,
+                Name = viewModel.ShippingAddress.Name,
+                State = viewModel.ShippingAddress.StateRegion,
+                Street1 = viewModel.ShippingAddress.AddressLine1,
+                Street2 = viewModel.ShippingAddress.AddressLine2,
+                Zip = viewModel.ShippingAddress.PostalCode
+            };
+
+            // Get the shipping cost using the business (fromAddress) and customer (toAddress) addresses.
+            var shippingCostResult = await this.GetShippingCostAsync(viewModel, fromAddress, toAddress);
+            viewModel.ShippingAmount = shippingCostResult.Cost;
+
+            return this.View(viewModel);
         }
 
         // GET: /checkout/shipping-address
         [HttpGet("shipping-address")]
         public IActionResult ShippingAddress()
         {
-            // If a shipping address has already been set, redirect to checkout.
+            // If a shipping address is already set, redirect to checkout.
             var shippingAddressJson = this.TempData.Peek("ShippingAddress") as string;
             if (!string.IsNullOrEmpty(shippingAddressJson))
             {
                 return this.RedirectToAction("Index");
             }
+
             return this.View();
         }
 
@@ -69,10 +141,8 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                     address.StateRegion,
                     address.PostalCode,
                     address.CountryIso);
-
                 if (!validationResult.IsValid)
                 {
-                    // If no error message is provided, use a default one.
                     var errorMsg = string.IsNullOrWhiteSpace(validationResult.ErrorMessage)
                         ? "Address validation failed."
                         : "Address validation failed: " + validationResult.ErrorMessage;
@@ -101,48 +171,11 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             return this.RedirectToAction("Index");
         }
 
-
-        // GET: /checkout
-        [HttpGet("")]
-        public async Task<IActionResult> Index()
-        {
-            // Ensure session exists.
-            this.HttpContext.Session.Set("Init", new byte[] { 1 });
-            string sessionId = this.HttpContext.Session.Id;
-
-            // Load the shopping cart.
-            var cart = await this.context.ShoppingCarts
-                .Include(c => c.Items)
-                    .ThenInclude(i => i.Product)
-                .FirstOrDefaultAsync(c => c.SessionId == sessionId);
-            if (cart == null || !cart.Items.Any())
-            {
-                return this.RedirectToAction("Index", "Products", new { area = "Public" });
-            }
-
-            var viewModel = this.GetCheckoutModel(cart);
-
-            // Load shipping address from TempData.
-            var shippingAddressJson = this.TempData.Peek("ShippingAddress") as string;
-            if (!string.IsNullOrEmpty(shippingAddressJson))
-            {
-                var shippingCost = await this.GettingShippingCost(viewModel, shippingAddressJson);
-                // todo: display and store in session
-            }
-            else
-            {
-                // If no shipping address is set, redirect to shipping address input.
-                return this.RedirectToAction("ShippingAddress");
-            }
-
-            return this.View(viewModel);
-        }
-
         // GET: /checkout/edit-address
         [HttpGet("edit-address")]
         public IActionResult EditShippingAddress()
         {
-            // Remove the saved address so the user can re-enter.
+            // Clear the saved shipping address to force re-entry.
             this.TempData.Remove("ShippingAddress");
             return this.RedirectToAction("ShippingAddress");
         }
@@ -182,28 +215,17 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 return this.View(model);
             }
 
-            // TODO: Process the order (create order record, process payment, etc.)
-
+            // TODO: Process the order (create Order record, process payment, etc.)
             return this.RedirectToAction("OrderConfirmation", "Checkout", new { area = "Public" });
         }
 
-        private decimal CalculateShippingCharge(ShippingMethod shippingMethod, decimal orderTotal)
+        private async Task<ShippingCostResult> GetShippingCostAsync(
+            CheckoutViewModel viewModel,
+            EasyPost.Models.API.Address fromAddress,
+            EasyPost.Models.API.Address toAddress)
         {
-            return shippingMethod switch
-            {
-                ShippingMethod.Express => 15.00m,
-                ShippingMethod.Overnight => 25.00m,
-                ShippingMethod.Standard => 5.00m,
-                _ => 5.00m,
-            };
-        }
-
-        private async Task<ShippingCostResult> GettingShippingCost(CheckoutViewModel viewModel, string? shippingAddressJson)
-        {
-            viewModel.ShippingAddress = JsonConvert.DeserializeObject<Data.Models.OrderAddress>(shippingAddressJson);
-
+            // Build a shopping cart for EasyPost.
             var shippingCart = new Shipping.Models.ShoppingCart();
-
             foreach (var item in viewModel.Cart.Items)
             {
                 shippingCart.Items.Add(new Shipping.Models.ShoppingCartItem()
@@ -213,66 +235,31 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                         HeightInches = item.Product.HeightInches,
                         LengthInches = item.Product.LengthInches,
                         ShippingWeightOunces = item.Product.ShippingWeightOunces,
-                        WidthInches = item.Product.WidthInches,
+                        WidthInches = item.Product.WidthInches
                     },
                     Quantity = item.Quantity
                 });
             }
 
-            return await this.shippingCostCalculator.CalculateShippingCostAsync(
-              shippingCart,
-              new EasyPost.Models.API.Address()
-                {
-                    City = viewModel.ShippingAddress.City,
-                    Country = viewModel.ShippingAddress.CountryIso,
-                    Name = viewModel.ShippingAddress.Name,
-                    State = viewModel.ShippingAddress.StateRegion,
-                    Street1 = viewModel.ShippingAddress.AddressLine1,
-                    Street2 = viewModel.ShippingAddress.AddressLine2,
-                    Zip = viewModel.ShippingAddress.PostalCode,
-
-                },
-                // TODO
-              new EasyPost.Models.API.Address()
-                {
-                    City = "",
-                    Country = "",
-                    Name = "",
-                    State = "",
-                    Street1 = "",
-                    Street2 = "",
-                    Zip = ""
-
-                });
+            return await this.shippingCostCalculator.CalculateShippingCostAsync(shippingCart, fromAddress, toAddress);
         }
-
-
-        private CheckoutViewModel GetCheckoutModel(Data.Models.ShoppingCart? cart)
+ 
+        private async Task<EasyPost.Models.API.Address> SetBusinessAddress()
         {
-            decimal orderTotal = cart.Items.Sum(i => i.Product.Price * i.Quantity);
+            var businessDetails = await this.context.BusinessDetails.FirstOrDefaultAsync()
+                ?? throw new Exception("Business shipping address is not configured.");
 
-            var shippingOptions = Enum.GetValues(typeof(ShippingMethod))
-                .Cast<ShippingMethod>()
-                .Select(sm => new SelectListItem
-                {
-                    Value = sm.ToString(),
-                    Text = sm.ToString()
-                })
-                .ToList();
-
-            ShippingMethod defaultShipping = ShippingMethod.Standard;
-            decimal shippingAmount = this.CalculateShippingCharge(defaultShipping, orderTotal); // todo: do not use this
-
-            var viewModel = new CheckoutViewModel
+            var fromAddress = new EasyPost.Models.API.Address()
             {
-                Cart = cart,
-                OrderTotal = orderTotal,
-                ShippingOptions = shippingOptions,
-                SelectedShippingMethod = defaultShipping,
-                ShippingAmount = shippingAmount
+                City = businessDetails.City,
+                Country = businessDetails.CountryIso,
+                Name = businessDetails.Name,
+                State = businessDetails.StateRegion,
+                Street1 = businessDetails.AddressLine1,
+                Street2 = businessDetails.AddressLine2,
+                Zip = businessDetails.PostalCode
             };
-            return viewModel;
+            return fromAddress;
         }
-
     }
 }

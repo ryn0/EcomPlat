@@ -13,6 +13,7 @@ namespace EcomPlat.Data.DbContextInfo
 
         public DbSet<ApplicationUser> ApplicationUser { get; set;  }
         public DbSet<ApplicationUserRole> ApplicationUserRole { get; set;  }
+        public DbSet<BusinessDetails> BusinessDetails { get; set; }
         public DbSet<Category> Categories { get; set;  }
         public DbSet<Company> Companies { get; set; }
         public DbSet<ConfigSetting> ConfigSettings { get; set;  }
@@ -26,6 +27,7 @@ namespace EcomPlat.Data.DbContextInfo
         public DbSet<ShoppingCart> ShoppingCarts { get; set;  }
         public DbSet<Subcategory> Subcategories { get; set;  }
         public DbSet<Supplier> Suppliers { get; set;  }
+        public DbSet<Warehouse> Warehouses { get; set; }
 
         public override int SaveChanges()
         {

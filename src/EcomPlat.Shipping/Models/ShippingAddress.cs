@@ -2,10 +2,8 @@
 
 namespace EcomPlat.Shipping.Models
 {
-    public class OrderAddress
+    public class ShippingAddress
     {
-         
-
         [Required]
         [MaxLength(100)]
         public string Name { get; set; }

@@ -1,0 +1,55 @@
+﻿@model IEnumerable<EcomPlat.Data.Models.BusinessDetails>
+@{
+    ViewData["Title"] = "Business Details";
+}
+
+<h2>Business Details</h2>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Address</th>
+            <th>City</th>
+            <th>State</th>
+            <th>Postal Code</th>
+            <th>Country</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Address Type</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Name</td>
+                <td>
+                    @item.AddressLine1
+                    @if (!string.IsNullOrEmpty(item.AddressLine2))
+                    {
+                        <br />
+
+                        @item.AddressLine2
+                    }
+                </td>
+                <td>@item.City</td>
+                <td>@item.StateRegion</td>
+                <td>@item.PostalCode</td>
+                <td>@item.CountryIso</td>
+                <td>@item.Phone</td>
+                <td>@item.Email</td>
+                <td>@item.AddressType</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.BusinessDetailsId" class="btn btn-sm btn-warning">Edit</a>
+                    <a asp-action="Details" asp-route-id="@item.BusinessDetailsId" class="btn btn-sm btn-info">Details</a>
+                    <a asp-action="Delete" asp-route-id="@item.BusinessDetailsId" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

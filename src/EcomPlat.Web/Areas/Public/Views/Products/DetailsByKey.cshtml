@@ -32,15 +32,6 @@
                 <dt class="col-sm-4">Sale Price</dt>
                 <dd class="col-sm-8">@Model.SalePrice.Value.ToString("C")</dd>
             }
-            <dt class="col-sm-4">Company</dt>
-            <dd class="col-sm-8">@Model.Company?.Name</dd>
-            <dt class="col-sm-4">Country of Origin</dt>
-            <dd class="col-sm-8">
-                @EcomPlat.Utilities.Helpers.CountryHelper.GetCountryName(Model.CountryOfOrigin)
-                <img src="@(Url.Content("~/images/flags/" + Model.CountryOfOrigin.ToLower() + ".png"))"
-                     alt="@Model.CountryOfOrigin"
-                     class="flag-logo" />
-            </dd>
             <dt class="col-sm-4">Category</dt>
             <dd class="col-sm-8">
                 @if (Model.Subcategory?.Category != null)
@@ -67,12 +58,22 @@
                 {
                     <span>No Category</span>
                 }
+            <dt class="col-sm-4">Company</dt>
+            <dd class="col-sm-8">@Model.Company?.Name</dd>
+            <dt class="col-sm-4">Country of Origin</dt>
+            <dd class="col-sm-8">
+                @EcomPlat.Utilities.Helpers.CountryHelper.GetCountryName(Model.CountryOfOrigin)
+                <img src="@(Url.Content("~/images/flags/" + Model.CountryOfOrigin.ToLower() + ".png"))"
+                     alt="@Model.CountryOfOrigin"
+                     class="flag-logo" />
+            </dd>
+         
             </dd>
             <dt class="col-sm-4">In Stock</dt>
             <dd class="col-sm-8">@(Model.IsAvailable ? "Yes" : "No")</dd>
 
             <!-- New fields for shipping & dimensions -->
-            <dt class="col-sm-4">Weight (oz)</dt>
+            <dt class="col-sm-4">Product Weight (oz)</dt>
             <dd class="col-sm-8">@Model.ProductWeightOunces.ToString("F2")</dd>
 
             <dt class="col-sm-4">Shipping Weight (oz)</dt>

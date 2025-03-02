@@ -30,11 +30,11 @@ namespace EcomPlat.Web.Areas.Account.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var products = await this.context.Products
+            var products = await this.context.Products.OrderByDescending(x => x.CreateDate)
                 .Include(p => p.Subcategory)
-                    .ThenInclude(s => s.Category)
+                .ThenInclude(s => s.Category)
                 .Include(p => p.Company)
-                .Include(p => p.Images)
+                .Include(p => p.Images.Where(x => x.IsMain == true))
                 .ToListAsync();
             return this.View(products);
         }

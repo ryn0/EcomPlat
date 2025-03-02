@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
-using EcomPlat.Data.DbContextInfo;
+﻿using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

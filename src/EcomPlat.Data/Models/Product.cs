@@ -84,16 +84,14 @@ namespace EcomPlat.Data.Models
         /// <summary>
         /// Gets or sets the SKU (Stock Keeping Unit) for the product.
         /// </summary>
-        [Required]
         [MaxLength(50)]
-        public string Sku { get; set; }
+        public string? Sku { get; set; }
 
         /// <summary>
         /// UPC (Universal Product Code) 
         /// </summary>
-        [Required]
         [MaxLength(12)]
-        public string Upc { get; set; }
+        public string? Upc { get; set; }
 
         /// <summary>
         /// Gets or sets the current stock quantity available.

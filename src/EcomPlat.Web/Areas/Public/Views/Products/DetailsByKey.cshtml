@@ -34,20 +34,17 @@
             }
             <dt class="col-sm-4">Company</dt>
             <dd class="col-sm-8">@Model.Company?.Name</dd>
-
             <dt class="col-sm-4">Country of Origin</dt>
             <dd class="col-sm-8">
                 @EcomPlat.Utilities.Helpers.CountryHelper.GetCountryName(Model.CountryOfOrigin)
                 <img src="@(Url.Content("~/images/flags/" + Model.CountryOfOrigin.ToLower() + ".png"))"
                      alt="@Model.CountryOfOrigin"
-                     class="@Model.CountryOfOrigin.ToLower()" />
+                     class="flag-logo" />
             </dd>
-
             <dt class="col-sm-4">Category</dt>
             <dd class="col-sm-8">
                 @if (Model.Subcategory?.Category != null)
                 {
-                    <!-- Category link (clears any subcategory filter) -->
                     <a asp-area="Public"
                        asp-controller="Products"
                        asp-action="Index"
@@ -57,7 +54,6 @@
                         @Model.Subcategory.Category.Name
                     </a>
                     @: &gt;
-                    <!-- Subcategory link -->
                     <a asp-area="Public"
                        asp-controller="Products"
                        asp-action="Index"
@@ -72,11 +68,29 @@
                     <span>No Category</span>
                 }
             </dd>
-
             <dt class="col-sm-4">In Stock</dt>
             <dd class="col-sm-8">@(Model.IsAvailable ? "Yes" : "No")</dd>
+
+            <!-- New fields for shipping & dimensions -->
+            <dt class="col-sm-4">Weight (oz)</dt>
+            <dd class="col-sm-8">@Model.ProductWeightOunces.ToString("F2")</dd>
+
+            <dt class="col-sm-4">Shipping Weight (oz)</dt>
+            <dd class="col-sm-8">@Model.ShippingWeightOunces.ToString("F2")</dd>
+
+            <dt class="col-sm-4">Dimensions (L x W x H in)</dt>
+            <dd class="col-sm-8">
+                @Model.LengthInches.ToString("F2") x @Model.WidthInches.ToString("F2") x @Model.HeightInches.ToString("F2")
+            </dd>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Upc))
+            {
+                <dt class="col-sm-4">UPC</dt>
+                <dd class="col-sm-8">@Model.Upc</dd>
+            }
+
         </dl>
-     
+
         <form asp-area="Public" asp-controller="ShoppingCart" asp-action="AddToCart" method="post">
             <input type="hidden" name="productId" value="@Model.ProductId" />
             <div class="form-group">
@@ -85,17 +99,15 @@
             </div>
             <button type="submit" class="btn btn-success mt-2">Add to Cart</button>
         </form>
-         <br />
+        <br />
         <p>@Model.Description</p>
-
     </div>
-
 </div>
 
 <hr />
 
 @{
-    // Get all small image variants
+    // Get all small image variants.
     var smallImages = Model.Images
                         .Where(i => i.Size == EcomPlat.Data.Enums.ImageSize.Small)
                         .OrderBy(i => i.DisplayOrder)
@@ -108,9 +120,9 @@
     <div class="row">
         @foreach (var small in smallImages)
         {
-            // Look up the corresponding large variant from the same group.
-            var largeVariant = Model.Images.FirstOrDefault(i => i.Size == EcomPlat.Data.Enums.ImageSize.Large
-            && i.ImageGroupGuid == small.ImageGroupGuid);
+            // Find the corresponding large variant.
+            var largeVariant = Model.Images.FirstOrDefault(i => i.Size == EcomPlat.Data.Enums.ImageSize.Large &&
+            i.ImageGroupGuid == small.ImageGroupGuid);
             <div class="col-auto mb-2">
                 <img src="@small.ImageUrl" alt="Thumbnail" class="thumbnail-img"
                      data-large="@largeVariant?.ImageUrl" data-product-key="@Model.ProductKey"
@@ -126,7 +138,6 @@
             $(".thumbnail-img").click(function (e) {
                 e.preventDefault();
                 var img = $(this);
-                // Retrieve the large image URL from the data attribute.
                 var newSrc = img.data("large");
                 if(newSrc){
                     $("#mainImage").attr("src", newSrc);

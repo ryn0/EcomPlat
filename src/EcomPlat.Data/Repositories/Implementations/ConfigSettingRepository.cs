@@ -5,7 +5,6 @@ using EcomPlat.Data.Models;
 
 namespace EcomPlat.Data.Repositories.Interfaces
 {
-
     public class ConfigSettingRepository : IConfigSettingRepository
     {
         public ConfigSettingRepository(IApplicationDbContext context)

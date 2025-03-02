@@ -132,7 +132,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                     this.context.Update(existingProduct);
                     await this.context.SaveChangesAsync();
 
-                    await this.ProcessProductImageUploads(product, productImages);
+                    await this.ProcessProductImageUploads(existingProduct, productImages);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -443,23 +443,56 @@ namespace EcomPlat.Web.Areas.Account.Controllers
 
                     foreach (var size in sizes)
                     {
-                        var productImage = await this.ProcessFileUploadForSize(product, file, size, directory, groupOrder);
-                        productImage.CreatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
-                        productImage.ImageGroupGuid = groupGuid;
-                        // If no main image exists, mark all variants in this group as main.
-                        productImage.IsMain = !hasMainImage;
-                        product.Images.Add(productImage);
+                        // Compute the final file name for this size.
+                        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file.FileName);
+                        var extension = Path.GetExtension(file.FileName);
+                        string finalFileName = $"{fileNameWithoutExtension}_{size}{extension}".ToLower();
+
+                        // Look for an existing image with the same file name for this product and size.
+                        var existingImage = product.Images.FirstOrDefault(i =>
+                            i.Size == size &&
+                            i.ImageUrl.EndsWith(finalFileName, StringComparison.OrdinalIgnoreCase));
+
+                        if (existingImage != null)
+                        {
+                            // Process the file upload (this returns a new image with the same final file name).
+                            var updatedImage = await this.ProcessFileUploadForSize(product, file, size, directory, groupOrder);
+                            // Overwrite the existing record's URL and update the timestamp.
+                            existingImage.ImageUrl = updatedImage.ImageUrl;
+                            existingImage.UpdateDate = DateTime.UtcNow;
+                            existingImage.UpdatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
+                        }
+                        else
+                        {
+                            // No existing record: create a new one.
+                            var productImage = await this.ProcessFileUploadForSize(product, file, size, directory, groupOrder);
+                            productImage.CreatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
+                            productImage.ImageGroupGuid = groupGuid;
+                            productImage.IsMain = !hasMainImage;
+                            // Add to both the context and the navigation collection.
+                            this.context.ProductImages.Add(productImage);
+                            product.Images.Add(productImage);
+                        }
                     }
 
-                    // If we just marked this group as main, update the flag so that subsequent uploads won't override it.
                     if (!hasMainImage)
                     {
                         hasMainImage = true;
                     }
                 }
             }
-            await this.context.SaveChangesAsync();
+
+            try
+            {
+                await this.context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                // Optionally log the error.
+                throw; // or handle as needed
+            }
         }
+
 
         /// <summary>
         /// Returns the current maximum DisplayOrder for a given product.

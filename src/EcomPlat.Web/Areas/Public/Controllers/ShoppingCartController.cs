@@ -1,16 +1,13 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
-using EcomPlat.Data.DbContextInfo;
+﻿using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Enums;
 using EcomPlat.Data.Models;
 using EcomPlat.Utilities.Helpers;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace EcomPlat.Web.Areas.Public.Controllers
 {
-    [Area("Public")]
+    [Area(Constants.StringConstants.PublicArea)]
     [Route("cart")]
     public class ShoppingCartController : Controller
     {

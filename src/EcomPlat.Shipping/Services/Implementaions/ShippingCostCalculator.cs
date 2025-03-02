@@ -1,8 +1,8 @@
 ﻿using System.Globalization;
 using EasyPost;
-using EcomPlat.Shipping.Services.Interfaces;
 using EasyPost.Models.API;
-using EcomPlat.Shipping.Models; // Contains ShippingCostResult
+using EcomPlat.Shipping.Models;
+using EcomPlat.Shipping.Services.Interfaces;
 
 namespace EcomPlat.Shipping.Services.Implementations
 {
@@ -50,19 +50,28 @@ namespace EcomPlat.Shipping.Services.Implementations
                     Height = dimension
                 }));
 
-            // Create a shipment with the provided addresses and the created parcel.
-            Shipment shipment = await Task.Run(() =>
-                this.client.Shipment.Create(new EasyPost.Parameters.Shipment.Create
-                {
-                    FromAddress = fromAddress,
-                    ToAddress = toAddress,
-                    Parcel = parcel
-                }));
+            Rate uspsPriorityRate;
 
-            // Retrieve the USPS Priority rate from the shipment.
-            Rate uspsPriorityRate = shipment.Rates.FirstOrDefault(r =>
-                r.Carrier.Equals("USPS", StringComparison.OrdinalIgnoreCase) &&
-                r.Service.Equals("Priority", StringComparison.OrdinalIgnoreCase));
+            try
+            {
+                // Create a shipment with the provided addresses and the created parcel.
+                Shipment shipment = await Task.Run(() =>
+                    this.client.Shipment.Create(new EasyPost.Parameters.Shipment.Create
+                    {
+                        FromAddress = fromAddress,
+                        ToAddress = toAddress,
+                        Parcel = parcel
+                    }));
+
+                // Retrieve the USPS Priority rate from the shipment.
+                uspsPriorityRate = shipment.Rates.FirstOrDefault(r =>
+                  r.Carrier.Equals("USPS", StringComparison.OrdinalIgnoreCase) &&
+                  r.Service.Equals("Priority", StringComparison.OrdinalIgnoreCase));
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to get shipment info", ex.InnerException);
+            }
 
             if (uspsPriorityRate == null)
             {

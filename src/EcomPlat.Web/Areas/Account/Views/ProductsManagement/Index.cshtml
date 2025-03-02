@@ -23,7 +23,7 @@
     <tbody>
         @foreach (var product in Model)
         {
-            var smallImage = product.Images.FirstOrDefault(i => i.Size == EcomPlat.Data.Enums.ImageSize.Small);
+            var smallImage = product.Images.FirstOrDefault(i => i.Size == EcomPlat.Data.Enums.ImageSize.Small && i.IsMain == true);
             <tr>
                 <td>
                     @if (smallImage != null)

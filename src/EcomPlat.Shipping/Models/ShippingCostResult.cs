@@ -1,6 +1,4 @@
-﻿using EasyPost.Models.API;
-
-namespace EcomPlat.Shipping.Models
+﻿namespace EcomPlat.Shipping.Models
 {
     /// <summary>
     /// Represents the shipping cost result.

@@ -7,8 +7,6 @@ using Microsoft.EntityFrameworkCore;
 namespace EcomPlat.Web.Areas.Public.Controllers
 {
     [Area(Constants.StringConstants.PublicArea)]
-    // This route pattern allows optional categoryKey and subCategoryKey:
-    // e.g. /products, /products/SomeCategory, /products/SomeCategory/SomeSubCategory
     [Route("products/{categoryKey?}/{subCategoryKey?}")]
     public class ProductsController : Controller
     {
@@ -37,13 +35,35 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 pageSize = 10;
             }
 
-            // 1. Load categories for sidebar
+            // Get IDs of subcategories with available products.
+            var availableSubcategoryIds = await this.context.Products
+                .Where(p => p.IsAvailable)
+                .Select(p => p.SubcategoryId)
+                .Distinct()
+                .ToListAsync();
+
+            // Load all categories with their subcategories.
             var allCategories = await this.context.Categories
                 .Include(c => c.Subcategories)
                 .OrderBy(c => c.Name)
                 .ToListAsync();
 
-            // 2. Base query: only available products
+            // Filter categories to only include those with at least one available subcategory.
+            var availableCategories = allCategories
+                .Select(c => new
+                {
+                    Category = c,
+                    Subcategories = c.Subcategories.Where(sc => availableSubcategoryIds.Contains(sc.SubcategoryId)).ToList()
+                })
+                .Where(x => x.Subcategories.Any())
+                .Select(x =>
+                {
+                    x.Category.Subcategories = x.Subcategories;
+                    return x.Category;
+                })
+                .ToList();
+
+            // 2. Base query: only available products.
             var query = this.context.Products
                 .Include(p => p.Images.Where(x => x.IsMain == true))
                 .Include(p => p.Subcategory)
@@ -51,19 +71,19 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 .Include(p => p.Company)
                 .Where(p => p.IsAvailable);
 
-            // 3. Filter by categoryKey (if provided)
+            // 3. Filter by categoryKey (if provided).
             if (!string.IsNullOrWhiteSpace(categoryKey))
             {
                 query = query.Where(p => p.Subcategory.Category.CategoryKey == categoryKey);
 
-                // 4. Filter by subCategoryKey (if provided)
+                // 4. Filter by subCategoryKey (if provided).
                 if (!string.IsNullOrWhiteSpace(subCategoryKey))
                 {
                     query = query.Where(p => p.Subcategory.SubcategoryKey == subCategoryKey);
                 }
             }
 
-            // 5. Apply sorting
+            // 5. Apply sorting.
             if (sortOrder == "priceAsc")
             {
                 query = query.OrderBy(p => p.Price);
@@ -83,7 +103,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 .Take(pageSize)
                 .ToListAsync();
 
-            // Rewrite image URLs for each product
+            // Rewrite image URLs for each product.
             var config = await this.GetImageUrlConfigAsync();
             foreach (var product in products)
             {
@@ -93,7 +113,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 }
             }
 
-            // Pass data to the view
+            // Pass data to the view.
             this.ViewData["SortOrder"] = sortOrder;
             this.ViewData["CurrentPage"] = page;
             this.ViewData["PageSize"] = pageSize;
@@ -101,8 +121,8 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             this.ViewData["SelectedCategoryKey"] = categoryKey;
             this.ViewData["SelectedSubCategoryKey"] = subCategoryKey;
 
-            // We'll store the category list in ViewBag for the sidebar
-            this.ViewBag.AllCategories = allCategories;
+            // Use the filtered list for the sidebar.
+            this.ViewBag.AllCategories = availableCategories;
 
             return this.View("Index", products);
         }

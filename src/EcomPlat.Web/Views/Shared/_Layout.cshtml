@@ -58,19 +58,28 @@
             margin-bottom: 3px;
         }
 
-        /* Flag row, slightly smaller space */
         .flag-line {
-            height: 16px;
-            margin-bottom: 2px;
             display: flex;
             align-items: center;
+            margin-bottom: 2px;
         }
 
-            .flag-line img {
-                height: 16px;
-                width: auto;
+            .flag-line .flag-container {
+                width: 20px;
+                height: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
                 margin-right: 5px;
             }
+
+                .flag-line .flag-container img {
+                    max-width: 100%;
+                    max-height: 100%;
+                    object-fit: contain;
+                }
+
 
         /* Buttons at the bottom */
         .button-row {

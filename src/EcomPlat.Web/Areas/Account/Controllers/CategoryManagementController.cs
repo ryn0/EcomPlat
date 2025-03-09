@@ -25,7 +25,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         // GET: /Admin/Category
         public async Task<IActionResult> Index()
         {
-            var categories = await this.context.Categories.ToListAsync();
+            var categories = await this.context.Categories.OrderBy(x => x.Name).ToListAsync();
             return this.View(categories);
         }
 

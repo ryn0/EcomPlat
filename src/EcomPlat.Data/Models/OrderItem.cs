@@ -7,17 +7,25 @@ namespace EcomPlat.Data.Models
     {
         public int OrderItemId { get; set; }
 
-        // Quantity of the product ordered
+        /// <summary>
+        /// Quantity of the product ordered.
+        /// </summary>
         public int Quantity { get; set; }
 
-        // Capture the price at the time of order
+        /// <summary>
+        /// Capture the price at the time of order.
+        /// </summary>
         public decimal UnitPrice { get; set; }
 
-        // Foreign key to the Order
+        /// <summary>
+        /// Foreign key to the Order
+        /// </summary>
         public int OrderId { get; set; }
         public Order Order { get; set; }
 
-        // Foreign key to the Product
+        /// <summary>
+        /// Foreign key to the Product.
+        /// </summary>
         public int ProductId { get; set; }
 
         [ValidateNever]

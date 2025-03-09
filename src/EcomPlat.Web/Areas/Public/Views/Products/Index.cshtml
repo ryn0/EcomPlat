@@ -135,7 +135,7 @@
                         <div class="card-body">
                             <!-- Product Name row -->
                             <div class="product-title">
-                                <h5 class="card-title">@StringHelpers.TruncateToNearestWord(product.Name, 60)</h5>
+                                <h5 class="card-title">@StringHelpers.TruncateToNearestWord(product.Name, 50)</h5>
                             </div>
 
                             <!-- Price row -->
@@ -145,8 +145,10 @@
 
                             <!-- Flag row -->
                             <div class="flag-line">
-                                <img src="@(Url.Content("~/images/flags/" + product.CountryOfOrigin.ToLower() + ".png"))"
-                                     alt="@product.CountryOfOrigin" />
+                                <div class="flag-container">
+                                        <img src="@(Url.Content("~/images/flags/" + product.CountryOfOrigin.ToLower() + ".png"))"
+                                         title="@product.CountryOfOrigin" alt="@product.CountryOfOrigin" />
+                                </div>
                             </div>
 
                             <!-- Buttons at the bottom -->

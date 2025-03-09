@@ -6,5 +6,6 @@
         public const string CurrencyFormat = "";
         public const string AccountArea = "Account";
         public const string PublicArea = "Public";
+        public const string SelectText = "-- Select --";
     }
 }

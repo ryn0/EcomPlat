@@ -23,7 +23,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         // GET: /Account/CompanyManagement/Index
         public async Task<IActionResult> Index()
         {
-            var companies = await this.context.Companies.ToListAsync();
+            var companies = await this.context.Companies.OrderBy(x => x.Name).ToListAsync();
             return this.View(companies);
         }
 

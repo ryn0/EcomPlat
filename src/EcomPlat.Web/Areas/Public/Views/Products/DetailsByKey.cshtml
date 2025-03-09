@@ -62,13 +62,16 @@
             <dd class="col-sm-8">@Model.Company?.Name</dd>
             <dt class="col-sm-4">Country of Origin</dt>
             <dd class="col-sm-8">
-                @EcomPlat.Utilities.Helpers.CountryHelper.GetCountryName(Model.CountryOfOrigin)
-                <img src="@(Url.Content("~/images/flags/" + Model.CountryOfOrigin.ToLower() + ".png"))"
-                     alt="@Model.CountryOfOrigin"
-                     class="flag-logo" />
+            
+                <div class="flag-line">
+                    <div class="flag-container">
+                        <img src="@(Url.Content("~/images/flags/" + Model.CountryOfOrigin.ToLower() + ".png"))"
+                             alt="@Model.CountryOfOrigin" />
+                    </div>
+                    <span>@EcomPlat.Utilities.Helpers.CountryHelper.GetCountryName(Model.CountryOfOrigin)</span>
+                </div>
             </dd>
          
-            </dd>
             <dt class="col-sm-4">In Stock</dt>
             <dd class="col-sm-8">@(Model.IsAvailable ? "Yes" : "No")</dd>
 

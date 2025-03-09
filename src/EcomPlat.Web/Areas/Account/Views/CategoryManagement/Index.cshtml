@@ -13,8 +13,7 @@
 <table class="table">
     <thead>
         <tr>
-            <th>Name</th>
-            <th>UrlKey</th>
+            <th>Category Name</th>
             <th></th>
         </tr>
     </thead>
@@ -23,7 +22,6 @@
         {
             <tr>
                 <td>@category.Name</td>
-                <td>@category.CategoryKey</td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@category.CategoryId" class="btn btn-sm btn-warning">Edit</a>
                     <a asp-action="Details" asp-route-id="@category.CategoryId" class="btn btn-sm btn-info">Details</a>

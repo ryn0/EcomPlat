@@ -51,7 +51,7 @@ namespace EcomPlat.Utilities.Helpers
         /// <param name="input">The string to truncate.</param>
         /// <param name="maxLength">The maximum allowed length (default is 60).</param>
         /// <returns>A truncated string that does not exceed maxLength.</returns>
-        public static string TruncateToNearestWord(string input, int maxLength = 60)
+        public static string TruncateToNearestWord(string input, int maxLength = 45)
         {
             // If input is null/empty or already within the limit, return it as-is.
             if (string.IsNullOrWhiteSpace(input) || input.Length <= maxLength)

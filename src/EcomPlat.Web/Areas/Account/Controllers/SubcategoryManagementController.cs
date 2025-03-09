@@ -27,6 +27,8 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         {
             var subcategories = await this.context.Subcategories
                 .Include(s => s.Category)
+                .OrderBy(s => s.Category.Name)
+                .ThenBy(s => s.Name)
                 .ToListAsync();
             return this.View(subcategories);
         }
@@ -51,7 +53,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         // GET: /Admin/Subcategory/Create
         public async Task<IActionResult> Create()
         {
-            this.ViewData["CategoryId"] = new SelectList(await this.context.Categories.ToListAsync(), "CategoryId", "Name");
+            await this.PopulateCategoriesDropDownList();
             return this.View();
         }
 
@@ -69,7 +71,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 return this.RedirectToAction(nameof(this.Index));
             }
 
-            this.ViewData["CategoryId"] = new SelectList(await this.context.Categories.ToListAsync(), "CategoryId", "Name", subcategory.CategoryId);
+            await this.PopulateCategoriesDropDownList(subcategory.CategoryId);
             return this.View(subcategory);
         }
 
@@ -80,13 +82,12 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
-
             var subcategory = await this.context.Subcategories.FindAsync(id);
             if (subcategory == null)
             {
                 return this.NotFound();
             }
-            this.ViewData["CategoryId"] = new SelectList(await this.context.Categories.ToListAsync(), "CategoryId", "Name", subcategory.CategoryId);
+            await this.PopulateCategoriesDropDownList(subcategory.CategoryId);
             return this.View(subcategory);
         }
 
@@ -121,7 +122,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 }
                 return this.RedirectToAction(nameof(this.Index));
             }
-            this.ViewData["CategoryId"] = new SelectList(await this.context.Categories.ToListAsync(), "CategoryId", "Name", subcategory.CategoryId);
+            await this.PopulateCategoriesDropDownList(subcategory.CategoryId);
             return this.View(subcategory);
         }
 
@@ -167,5 +168,17 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             return subcategory;
         }
 
+        // Helper method to populate category dropdown with a default option.
+        private async Task PopulateCategoriesDropDownList(object selectedId = null)
+        {
+            var categories = await this.context.Categories.OrderBy(x => x.Name).ToListAsync();
+            var list = categories.Select(c => new SelectListItem
+            {
+                Value = c.CategoryId.ToString(),
+                Text = c.Name
+            }).ToList();
+            list.Insert(0, new SelectListItem { Value = "", Text = Constants.StringConstants.SelectText });
+            this.ViewData["CategoryId"] = new SelectList(list, "Value", "Text", selectedId);
+        }
     }
 }

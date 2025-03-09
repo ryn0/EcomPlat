@@ -3,6 +3,7 @@ using EcomPlat.Data.Enums;
 using EcomPlat.Data.Models;
 using EcomPlat.FileStorage.Repositories.Interfaces;
 using EcomPlat.Utilities.Helpers;
+using EcomPlat.Web.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -61,9 +62,8 @@ namespace EcomPlat.Web.Areas.Account.Controllers
 
         public async Task<IActionResult> Create()
         {
-            await this.PopulateSubcategoryDropDownList();
-            await this.PopulateCompanyDropDownList();
-            await this.PopulateCountryDropDownList();
+            await this.LoadDropDowns();
+
             return this.View();
         }
 
@@ -71,6 +71,8 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Product product, IFormFileCollection ProductImages)
         {
+            this.ValidateProduct(product);
+
             if (this.ModelState.IsValid)
             {
                 product.CreatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
@@ -82,8 +84,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 return this.RedirectToAction(nameof(this.Index));
             }
 
-            await this.PopulateSubcategoryDropDownList(product.SubcategoryId);
-            await this.PopulateCompanyDropDownList(product.CompanyId);
+            await this.LoadDropDowns();
             return this.View(product);
         }
 
@@ -115,6 +116,8 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
+
+            this.ValidateProduct(product);
 
             if (this.ModelState.IsValid)
             {
@@ -159,16 +162,6 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             await this.PopulateCompanyDropDownList(product.CompanyId);
             await this.PopulateCountryDropDownList(product.CountryOfOrigin);
         }
-
-        private async Task PopulateCountryDropDownList(object selectedId = null)
-        {
-            // Get the dictionary of countries from the helper.
-            var countries = CountryHelper.GetCountries();
-            // Create a SelectList from the dictionary.
-            this.ViewBag.CountryOrigin = new SelectList(countries, "Key", "Value", selectedId);
-            await Task.CompletedTask; // For async signature compliance.
-        }
-
 
         public async Task<IActionResult> Delete(int? id)
         {
@@ -236,20 +229,44 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             // Get the group Guid of the chosen image.
             Guid chosenGroupGuid = chosenImage.ImageGroupGuid;
 
-            // For this product, update all images:
-            // Mark as main if they belong to the chosen group; otherwise, mark as not main.
+            // Retrieve all images for the product.
             var allImages = await this.context.ProductImages
                 .Where(pi => pi.ProductId == productId)
                 .ToListAsync();
-            foreach (var img in allImages)
+
+            // Separate images into the chosen group and others.
+            var mainGroup = allImages
+                .Where(pi => pi.ImageGroupGuid == chosenGroupGuid)
+                .OrderBy(pi => pi.DisplayOrder)
+                .ToList();
+            var otherGroup = allImages
+                .Where(pi => pi.ImageGroupGuid != chosenGroupGuid)
+                .OrderBy(pi => pi.DisplayOrder)
+                .ToList();
+
+            int order = 1;
+            // Update images in the chosen group.
+            foreach (var img in mainGroup)
             {
+                img.DisplayOrder = order;
+                img.IsMain = true;
                 img.UpdatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
-                img.IsMain = img.ImageGroupGuid == chosenGroupGuid;
+                order++;
             }
+            // Update images in the other group.
+            foreach (var img in otherGroup)
+            {
+                img.DisplayOrder = order;
+                img.IsMain = false;
+                img.UpdatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
+                order++;
+            }
+
             await this.context.SaveChangesAsync();
 
             return this.RedirectToAction("Edit", new { id = productId });
         }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -302,7 +319,9 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             var image = await this.context.ProductImages
                 .FirstOrDefaultAsync(pi => pi.ProductImageId == imageId && pi.ProductId == productId && pi.Size == ImageSize.Small);
             if (image == null)
+            {
                 return this.NotFound();
+            }
 
             int currentGroupOrder = image.DisplayOrder;
             var higherGroupOrder = await this.context.ProductImages
@@ -342,7 +361,6 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         {
             return this.context.Products.Any(e => e.ProductId == id);
         }
-
         private async Task PopulateSubcategoryDropDownList(object selectedId = null)
         {
             var subcategories = await this.context.Subcategories
@@ -351,13 +369,15 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 .ThenBy(s => s.Name)
                 .ToListAsync();
 
-            var list = subcategories.Select(s => new
+            var list = subcategories.Select(s => new SelectListItem
             {
-                s.SubcategoryId,
-                DisplayText = s.Category.Name + " > " + s.Name
-            });
+                Value = s.SubcategoryId.ToString(),
+                Text = s.Category.Name + " > " + s.Name
+            }).ToList();
 
-            this.ViewBag.SubCategoryId = new SelectList(list, "SubcategoryId", "DisplayText", selectedId);
+            // Insert default option at the top.
+            list.Insert(0, new SelectListItem { Value = "", Text = StringConstants.SelectText });
+            this.ViewBag.SubCategoryId = new SelectList(list, "Value", "Text", selectedId);
         }
 
         private async Task PopulateCompanyDropDownList(object selectedId = null)
@@ -366,14 +386,34 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 .OrderBy(c => c.Name)
                 .ToListAsync();
 
-            var list = companies.Select(c => new
+            var list = companies.Select(c => new SelectListItem
             {
-                c.CompanyId,
-                c.Name
-            });
+                Value = c.CompanyId.ToString(),
+                Text = c.Name
+            }).ToList();
 
-            this.ViewBag.CompanyId = new SelectList(list, "CompanyId", "Name", selectedId);
+            // Insert default option at the top.
+            list.Insert(0, new SelectListItem { Value = "", Text = StringConstants.SelectText });
+            this.ViewBag.CompanyId = new SelectList(list, "Value", "Text", selectedId);
         }
+
+        private async Task PopulateCountryDropDownList(object selectedId = null)
+        {
+            // Get the dictionary of countries from the helper.
+            var countries = CountryHelper.GetCountries();
+            // Build a list of SelectListItem from the dictionary.
+            var list = countries.Select(c => new SelectListItem
+            {
+                Value = c.Key,
+                Text = c.Value
+            }).ToList();
+
+            // Insert default option at the top.
+            list.Insert(0, new SelectListItem { Value = "", Text = StringConstants.SelectText });
+            this.ViewBag.CountryOrigin = new SelectList(list, "Value", "Text", selectedId);
+            await Task.CompletedTask; // For async signature compliance.
+        }
+
 
         /// <summary>
         /// Updates the fields on the existing product with values from the new product.
@@ -493,6 +533,13 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             }
         }
 
+        private void ValidateProduct(Product product)
+        {
+            if (product.ProductWeightOunces > product.ShippingWeightOunces)
+            {
+                this.ModelState.AddModelError(string.Empty, "Product weight cannot be greater than shiping weight");
+            }
+        }
 
         /// <summary>
         /// Returns the current maximum DisplayOrder for a given product.
@@ -545,6 +592,13 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 ProductId = product.ProductId,
                 DisplayOrder = displayOrder
             };
+        }
+
+        private async Task LoadDropDowns()
+        {
+            await this.PopulateSubcategoryDropDownList();
+            await this.PopulateCompanyDropDownList();
+            await this.PopulateCountryDropDownList();
         }
 
         /// <summary>

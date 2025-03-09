@@ -1,3 +1,3 @@
-Add-Migration MIGRATIONNAME -Project EcomPlat.Data --startup-project EcomPlat.Web
+Add-Migration MIGRATIONNAME -Project EcomPlat.Data 
 
 dotnet ef database update --context ApplicationDbContext --project EcomPlat.Data\EcomPlat.Data.csproj

@@ -120,6 +120,18 @@ namespace EcomPlat.Data.DbContextInfo
             modelBuilder.Entity<Product>()
                         .HasIndex(p => p.ProductKey)
                         .IsUnique();
+
+            modelBuilder.Entity<Company>()
+              .HasIndex(p => p.Name)
+              .IsUnique();
+
+            modelBuilder.Entity<Category>()
+                .HasIndex(p => p.CategoryKey)
+                .IsUnique();
+
+            modelBuilder.Entity<Subcategory>()
+                .HasIndex(p => p.SubcategoryKey)
+                .IsUnique();
         }
 
         private void SetDates()

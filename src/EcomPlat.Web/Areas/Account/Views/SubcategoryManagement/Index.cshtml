@@ -13,9 +13,9 @@
 <table class="table">
     <thead>
         <tr>
-            <th>Name</th>
-            <th>UrlKey</th>
-            <th>Category</th>
+            <th>Parent Category Name</th>
+            <th>Subcategory Name</th>
+           
             <th></th>
         </tr>
     </thead>
@@ -23,9 +23,8 @@
         @foreach (var subcategory in this.Model)
         {
             <tr>
-                <td>@subcategory.Name</td>
-                <td>@subcategory.SubcategoryKey</td>
                 <td>@subcategory.Category?.Name</td>
+                <td>@subcategory.Name</td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@subcategory.SubcategoryId" class="btn btn-sm btn-warning">Edit</a>
                     <a asp-action="Details" asp-route-id="@subcategory.SubcategoryId" class="btn btn-sm btn-info">Details</a>

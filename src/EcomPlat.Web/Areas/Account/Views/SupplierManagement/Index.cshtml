@@ -1,0 +1,43 @@
+﻿@model IEnumerable<EcomPlat.Data.Models.Supplier>
+
+@{
+    ViewData["Title"] = "Manage Suppliers";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Add New Supplier</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>City</th>
+            <th>State/Region</th>
+            <th>Country</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var supplier in Model)
+        {
+            <tr>
+                <td>@supplier.Name</td>
+                <td>@supplier.City</td>
+                <td>@supplier.StateRegion</td>
+                <td>@supplier.CountryIso</td>
+                <td>@supplier.Email</td>
+                <td>@supplier.Phone</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@supplier.SupplierId" class="btn btn-sm btn-warning">Edit</a>
+                    <a asp-action="Details" asp-route-id="@supplier.SupplierId" class="btn btn-sm btn-info">Details</a>
+                    <a asp-action="Delete" asp-route-id="@supplier.SupplierId" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

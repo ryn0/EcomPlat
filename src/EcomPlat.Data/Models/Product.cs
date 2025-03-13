@@ -123,6 +123,8 @@ namespace EcomPlat.Data.Models
         [ValidateNever]
         public Company Company { get; set; }
 
+        public string? Notes { get; set; } = string.Empty;
+
         /// <summary>
         /// Gets or sets the collection of images associated with the product.
         /// </summary>

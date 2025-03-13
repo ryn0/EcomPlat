@@ -63,7 +63,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 })
                 .ToList();
 
-            // 2. Base query: only available products.
+            // Base query: only available products.
             var query = this.context.Products
                 .Include(p => p.Images.Where(x => x.IsMain == true))
                 .Include(p => p.Subcategory)
@@ -71,20 +71,23 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 .Include(p => p.Company)
                 .Where(p => p.IsAvailable);
 
-            // 3. Filter by categoryKey (if provided).
+            // Filter by categoryKey (if provided).
             if (!string.IsNullOrWhiteSpace(categoryKey))
             {
                 query = query.Where(p => p.Subcategory.Category.CategoryKey == categoryKey);
-
-                // 4. Filter by subCategoryKey (if provided).
+                // Filter by subCategoryKey (if provided).
                 if (!string.IsNullOrWhiteSpace(subCategoryKey))
                 {
                     query = query.Where(p => p.Subcategory.SubcategoryKey == subCategoryKey);
                 }
             }
 
-            // 5. Apply sorting.
-            if (sortOrder == "priceAsc")
+            // Default sort by name unless price is specified.
+            if (string.IsNullOrWhiteSpace(sortOrder) || sortOrder == "name")
+            {
+                query = query.OrderBy(p => p.Name);
+            }
+            else if (sortOrder == "priceAsc")
             {
                 query = query.OrderBy(p => p.Price);
             }
@@ -113,15 +116,12 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 }
             }
 
-            // Pass data to the view.
             this.ViewData["SortOrder"] = sortOrder;
             this.ViewData["CurrentPage"] = page;
             this.ViewData["PageSize"] = pageSize;
             this.ViewData["TotalProducts"] = totalProducts;
             this.ViewData["SelectedCategoryKey"] = categoryKey;
             this.ViewData["SelectedSubCategoryKey"] = subCategoryKey;
-
-            // Use the filtered list for the sidebar.
             this.ViewBag.AllCategories = availableCategories;
 
             return this.View("Index", products);
@@ -151,9 +151,6 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             return this.View("DetailsByKey", product);
         }
 
-        /// <summary>
-        /// Retrieves the CDN and blob URL prefixes from the ConfigSettings table.
-        /// </summary>
         private async Task<(string cdnPrefix, string blobPrefix)> GetImageUrlConfigAsync()
         {
             var cdnSetting = await this.context.ConfigSettings

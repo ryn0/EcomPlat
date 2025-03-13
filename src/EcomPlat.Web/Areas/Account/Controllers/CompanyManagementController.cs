@@ -57,6 +57,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             if (this.ModelState.IsValid)
             {
                 company.CreatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
+                company = this.Clean(company);
                 this.context.Add(company);
                 await this.context.SaveChangesAsync();
                 return this.RedirectToAction(nameof(this.Index));
@@ -94,6 +95,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 try
                 {
                     company.UpdatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
+                    company = this.Clean(company);
                     this.context.Update(company);
                     await this.context.SaveChangesAsync();
                 }
@@ -143,6 +145,14 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         private bool CompanyExists(int id)
         {
             return this.context.Companies.Any(c => c.CompanyId == id);
+        }
+
+        private Company Clean(Company company)
+        {
+            company.Name = company.Name.Trim();
+            company.Description = company.Description.Trim();
+
+            return company;
         }
     }
 }

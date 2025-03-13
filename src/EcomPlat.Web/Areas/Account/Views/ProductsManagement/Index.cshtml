@@ -2,6 +2,10 @@
 
 @{
     ViewData["Title"] = "Manage Products";
+    int currentPage = (int)(ViewData["CurrentPage"] ?? 1);
+    int pageSize = (int)(ViewData["PageSize"] ?? 10);
+    int totalProducts = (int)(ViewData["TotalProducts"] ?? 0);
+    int totalPages = (int)Math.Ceiling((double)totalProducts / pageSize);
 }
 
 <h2>@ViewData["Title"]</h2>
@@ -9,6 +13,8 @@
 <p>
     <a asp-action="Create" class="btn btn-primary">Add New Product</a>
 </p>
+
+<span>Total: @totalProducts</span>
 
 <table class="table">
     <thead>
@@ -23,7 +29,7 @@
     <tbody>
         @foreach (var product in Model)
         {
-            var smallImage = product.Images.FirstOrDefault(i => i.Size == EcomPlat.Data.Enums.ImageSize.Small && i.IsMain == true);
+            var smallImage = product.Images.FirstOrDefault(i => i.Size == EcomPlat.Data.Enums.ImageSize.Small && i.IsMain);
             <tr>
                 <td>
                     @if (smallImage != null)
@@ -47,3 +53,20 @@
         }
     </tbody>
 </table>
+
+<nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+        <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
+            <a class="page-link" asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-pageSize="@(pageSize)">Previous</a>
+        </li>
+        @for (int i = 1; i <= totalPages; i++)
+        {
+            <li class="page-item @(i == currentPage ? "active" : "")">
+                <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-pageSize="@(pageSize)">@i</a>
+            </li>
+        }
+        <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
+            <a class="page-link" asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-pageSize="@(pageSize)">Next</a>
+        </li>
+    </ul>
+</nav>

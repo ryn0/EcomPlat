@@ -29,14 +29,23 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             this.siteFilesRepository = siteFilesRepository;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 10)
         {
-            var products = await this.context.Products.OrderByDescending(x => x.CreateDate)
+            int totalProducts = await this.context.Products.CountAsync();
+            var products = await this.context.Products
+                .OrderByDescending(x => x.CreateDate)
                 .Include(p => p.Subcategory)
-                .ThenInclude(s => s.Category)
+                    .ThenInclude(s => s.Category)
                 .Include(p => p.Company)
                 .Include(p => p.Images.Where(x => x.IsMain == true))
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
+
+            this.ViewData["CurrentPage"] = page;
+            this.ViewData["PageSize"] = pageSize;
+            this.ViewData["TotalProducts"] = totalProducts;
+
             return this.View(products);
         }
 
@@ -76,7 +85,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             if (this.ModelState.IsValid)
             {
                 product.CreatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
-                product.ProductKey = StringHelpers.UrlKey(product.Name);
+                product = this.Clean(product);
                 this.context.Add(product);
                 await this.context.SaveChangesAsync();
 
@@ -276,7 +285,9 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             var image = await this.context.ProductImages
                 .FirstOrDefaultAsync(pi => pi.ProductImageId == imageId && pi.ProductId == productId && pi.Size == ImageSize.Small);
             if (image == null)
+            {
                 return this.NotFound();
+            }
 
             int currentGroupOrder = image.DisplayOrder;
             var lowerGroupOrder = await this.context.ProductImages
@@ -422,9 +433,9 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         /// <param name="newProduct">The new product values from the form.</param>
         private void UpdateProductFields(Product existingProduct, Product newProduct)
         {
-            existingProduct.Name = newProduct.Name;
+            existingProduct.Name = newProduct.Name.Trim();
             existingProduct.ProductKey = StringHelpers.UrlKey(newProduct.Name);
-            existingProduct.Description = newProduct.Description;
+            existingProduct.Description = newProduct.Description.Trim();
             existingProduct.Price = newProduct.Price;
             existingProduct.SalePrice = newProduct.SalePrice;
             existingProduct.IsAvailable = newProduct.IsAvailable;
@@ -438,6 +449,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             existingProduct.CompanyId = newProduct.CompanyId;
             existingProduct.Upc = newProduct.Upc;
             existingProduct.Sku = newProduct.Sku;
+            existingProduct.Notes = newProduct.Notes;
         }
 
         /// <summary>
@@ -630,6 +642,15 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             await image.SaveAsJpegAsync(resizedStream);
             resizedStream.Position = 0;
             return resizedStream;
+        }
+
+        private Product Clean(Product product)
+        {
+            product.ProductKey = StringHelpers.UrlKey(product.Name);
+            product.Name = product.Name.Trim();
+            product.Notes = product?.Notes?.Trim();
+
+            return product;
         }
     }
 }

@@ -12,27 +12,27 @@ namespace EcomPlat.Web.Areas.Account.Controllers
 {
     [Area(StringConstants.AccountArea)]
     [Authorize]
-    public class SupplierManagementController : Controller
+    public class WarehouseManagementController : Controller
     {
         private readonly ApplicationDbContext context;
         private readonly UserManager<ApplicationUser> userManager;
 
-        public SupplierManagementController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public WarehouseManagementController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             this.context = context;
             this.userManager = userManager;
         }
 
-        // GET: /Account/SupplierManagement/Index
+        // GET: /Account/WarehouseManagement/Index
         public async Task<IActionResult> Index()
         {
-            var suppliers = await this.context.Suppliers
-                .OrderBy(s => s.Name)
+            var warehouses = await this.context.Warehouses
+                .OrderBy(w => w.Name)
                 .ToListAsync();
-            return this.View(suppliers);
+            return this.View(warehouses);
         }
 
-        // GET: /Account/SupplierManagement/Details/5
+        // GET: /Account/WarehouseManagement/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -40,37 +40,37 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 return this.NotFound();
             }
 
-            var supplier = await this.context.Suppliers
-                .FirstOrDefaultAsync(s => s.SupplierId == id);
-            if (supplier == null)
+            var warehouse = await this.context.Warehouses
+                .FirstOrDefaultAsync(w => w.WarehouseId == id);
+            if (warehouse == null)
             {
                 return this.NotFound();
             }
-            return this.View(supplier);
+            return this.View(warehouse);
         }
 
-        // GET: /Account/SupplierManagement/Create
+        // GET: /Account/WarehouseManagement/Create
         public IActionResult Create()
         {
             return this.View();
         }
 
-        // POST: /Account/SupplierManagement/Create
+        // POST: /Account/WarehouseManagement/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Supplier supplier)
+        public async Task<IActionResult> Create(Warehouse warehouse)
         {
             if (this.ModelState.IsValid)
             {
-                supplier.CreatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
-                this.context.Add(supplier);
+                warehouse.CreatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
+                this.context.Add(warehouse);
                 await this.context.SaveChangesAsync();
                 return this.RedirectToAction(nameof(this.Index));
             }
-            return this.View(supplier);
+            return this.View(warehouse);
         }
 
-        // GET: /Account/SupplierManagement/Edit/5
+        // GET: /Account/WarehouseManagement/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -78,20 +78,20 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 return this.NotFound();
             }
 
-            var supplier = await this.context.Suppliers.FindAsync(id);
-            if (supplier == null)
+            var warehouse = await this.context.Warehouses.FindAsync(id);
+            if (warehouse == null)
             {
                 return this.NotFound();
             }
-            return this.View(supplier);
+            return this.View(warehouse);
         }
 
-        // POST: /Account/SupplierManagement/Edit/5
+        // POST: /Account/WarehouseManagement/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Supplier supplier)
+        public async Task<IActionResult> Edit(int id, Warehouse warehouse)
         {
-            if (id != supplier.SupplierId)
+            if (id != warehouse.WarehouseId)
             {
                 return this.NotFound();
             }
@@ -100,13 +100,13 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 try
                 {
-                    supplier.UpdatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
-                    this.context.Update(supplier);
+                    warehouse.UpdatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
+                    this.context.Update(warehouse);
                     await this.context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!this.SupplierExists(supplier.SupplierId))
+                    if (!this.WarehouseExists(warehouse.WarehouseId))
                     {
                         return this.NotFound();
                     }
@@ -117,10 +117,10 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 }
                 return this.RedirectToAction(nameof(this.Index));
             }
-            return this.View(supplier);
+            return this.View(warehouse);
         }
 
-        // GET: /Account/SupplierManagement/Delete/5
+        // GET: /Account/WarehouseManagement/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -128,32 +128,32 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 return this.NotFound();
             }
 
-            var supplier = await this.context.Suppliers
-                .FirstOrDefaultAsync(s => s.SupplierId == id);
-            if (supplier == null)
+            var warehouse = await this.context.Warehouses
+                .FirstOrDefaultAsync(w => w.WarehouseId == id);
+            if (warehouse == null)
             {
                 return this.NotFound();
             }
-            return this.View(supplier);
+            return this.View(warehouse);
         }
 
-        // POST: /Account/SupplierManagement/Delete/5
+        // POST: /Account/WarehouseManagement/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var supplier = await this.context.Suppliers.FindAsync(id);
-            if (supplier != null)
+            var warehouse = await this.context.Warehouses.FindAsync(id);
+            if (warehouse != null)
             {
-                this.context.Suppliers.Remove(supplier);
+                this.context.Warehouses.Remove(warehouse);
                 await this.context.SaveChangesAsync();
             }
             return this.RedirectToAction(nameof(this.Index));
         }
 
-        private bool SupplierExists(int id)
+        private bool WarehouseExists(int id)
         {
-            return this.context.Suppliers.Any(e => e.SupplierId == id);
+            return this.context.Warehouses.Any(w => w.WarehouseId == id);
         }
     }
 }

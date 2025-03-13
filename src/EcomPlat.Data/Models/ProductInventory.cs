@@ -1,5 +1,6 @@
 ﻿using EcomPlat.Data.Enums;
 using EcomPlat.Data.Models.BaseModels;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace EcomPlat.Data.Models
 {
@@ -9,6 +10,8 @@ namespace EcomPlat.Data.Models
 
         // Foreign key linking to the Product table.
         public int ProductId { get; set; }
+
+        [ValidateNever]
         public Product Product { get; set; }
 
         // The cost at which you acquired the product (per unit).
@@ -26,10 +29,13 @@ namespace EcomPlat.Data.Models
 
         // Foreign key linking to the Supplier table.
         public int SupplierId { get; set; }
+
+        [ValidateNever]
         public Supplier Supplier { get; set; }
 
         public int? WarehouseId { get; set; }
 
+        [ValidateNever]
         public Warehouse Warehouse { get; set; }
     }
 }

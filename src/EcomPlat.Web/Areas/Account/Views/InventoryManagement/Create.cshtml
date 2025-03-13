@@ -18,6 +18,11 @@
         <span asp-validation-for="SupplierId" class="text-danger"></span>
     </div>
     <div class="form-group">
+        <label asp-for="WarehouseId" class="control-label"></label>
+        <select asp-for="WarehouseId" asp-items="ViewBag.WarehouseId" class="form-control"></select>
+        <span asp-validation-for="WarehouseId" class="text-danger"></span>
+    </div>
+    <div class="form-group">
         <label asp-for="PurchaseCost" class="control-label"></label>
         <input asp-for="PurchaseCost" class="form-control" />
         <span asp-validation-for="PurchaseCost" class="text-danger"></span>

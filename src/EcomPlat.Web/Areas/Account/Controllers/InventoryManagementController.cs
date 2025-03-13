@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
-using EcomPlat.Data;
 using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Models;
 using EcomPlat.Web.Constants;
@@ -31,7 +30,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             var inventoryItems = await this.context.ProductInventories
                 .Include(pi => pi.Product)
                 .Include(pi => pi.Supplier)
-                .OrderBy(pi => pi.Product.Name)
+                .Include(pi => pi.Warehouse) // make sure Warehouse is included
                 .ToListAsync();
             return this.View(inventoryItems);
         }
@@ -46,6 +45,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             var inventory = await this.context.ProductInventories
                 .Include(pi => pi.Product)
                 .Include(pi => pi.Supplier)
+                .Include(pi => pi.Warehouse)
                 .FirstOrDefaultAsync(pi => pi.ProductInventoryId == id);
             if (inventory == null)
             {
@@ -91,7 +91,6 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
-
             await this.LoadDropDowns(inventory);
             return this.View(inventory);
         }
@@ -143,6 +142,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             var inventory = await this.context.ProductInventories
                 .Include(pi => pi.Product)
                 .Include(pi => pi.Supplier)
+                .Include(pi => pi.Warehouse)
                 .FirstOrDefaultAsync(pi => pi.ProductInventoryId == id);
             if (inventory == null)
             {
@@ -158,8 +158,11 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var inventory = await this.context.ProductInventories.FindAsync(id);
-            this.context.ProductInventories.Remove(inventory);
-            await this.context.SaveChangesAsync();
+            if (inventory != null)
+            {
+                this.context.ProductInventories.Remove(inventory);
+                await this.context.SaveChangesAsync();
+            }
             return this.RedirectToAction(nameof(this.Index));
         }
 
@@ -168,58 +171,41 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             return this.context.ProductInventories.Any(e => e.ProductInventoryId == id);
         }
 
-        // Helper method to load all dropdowns
+        /// <summary>
+        /// Loads dropdown lists for Products, Suppliers, and Warehouses.
+        /// Inserts a default option "-- Select --" at the top.
+        /// </summary>
+        /// <param name="inventory">An optional ProductInventory instance to select default values.</param>
         private async Task LoadDropDowns(ProductInventory inventory = null)
         {
-            await this.PopulateProductDropDownList(inventory?.ProductId);
-            await this.PopulateSupplierDropDownList(inventory?.SupplierId);
-            await this.PopulateCountryDropDownList(inventory?.Product?.CountryOfOrigin);
-        }
+            var products = await this.context.Products.OrderBy(p => p.Name).ToListAsync();
+            var suppliers = await this.context.Suppliers.OrderBy(s => s.Name).ToListAsync();
+            var warehouses = await this.context.Warehouses.OrderBy(w => w.Name).ToListAsync();
 
-        private async Task PopulateProductDropDownList(object selectedId = null)
-        {
-            var products = await this.context.Products
-                .OrderBy(p => p.Name)
-                .ToListAsync();
-
-            var list = products.Select(p => new SelectListItem
+            var productList = products.Select(p => new SelectListItem
             {
                 Value = p.ProductId.ToString(),
                 Text = p.Name
             }).ToList();
+            productList.Insert(0, new SelectListItem { Value = "", Text = StringConstants.SelectText });
 
-            list.Insert(0, new SelectListItem { Value = "", Text = StringConstants.SelectText });
-            this.ViewData["ProductId"] = new SelectList(list, "Value", "Text", selectedId);
-        }
-
-        private async Task PopulateSupplierDropDownList(object selectedId = null)
-        {
-            var suppliers = await this.context.Suppliers
-                .OrderBy(s => s.Name)
-                .ToListAsync();
-
-            var list = suppliers.Select(s => new SelectListItem
+            var supplierList = suppliers.Select(s => new SelectListItem
             {
                 Value = s.SupplierId.ToString(),
                 Text = s.Name
             }).ToList();
+            supplierList.Insert(0, new SelectListItem { Value = "", Text = StringConstants.SelectText });
 
-            list.Insert(0, new SelectListItem { Value = "", Text = StringConstants.SelectText });
-            this.ViewData["SupplierId"] = new SelectList(list, "Value", "Text", selectedId);
-        }
-
-        private async Task PopulateCountryDropDownList(object selectedId = null)
-        {
-            var countries = EcomPlat.Utilities.Helpers.CountryHelper.GetCountries();
-            var list = countries.Select(c => new SelectListItem
+            var warehouseList = warehouses.Select(w => new SelectListItem
             {
-                Value = c.Key,
-                Text = c.Value
+                Value = w.WarehouseId.ToString(),
+                Text = w.Name
             }).ToList();
+            warehouseList.Insert(0, new SelectListItem { Value = "", Text = StringConstants.SelectText });
 
-            list.Insert(0, new SelectListItem { Value = "", Text = StringConstants.SelectText });
-            this.ViewData["CountryOrigin"] = new SelectList(list, "Value", "Text", selectedId);
-            await Task.CompletedTask;
+            this.ViewBag.ProductId = new SelectList(productList, "Value", "Text", inventory?.ProductId);
+            this.ViewBag.SupplierId = new SelectList(supplierList, "Value", "Text", inventory?.SupplierId);
+            this.ViewBag.WarehouseId = new SelectList(warehouseList, "Value", "Text", inventory?.WarehouseId);
         }
     }
 }

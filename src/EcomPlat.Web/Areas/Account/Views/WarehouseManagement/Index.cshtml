@@ -1,0 +1,43 @@
+﻿@model IEnumerable<EcomPlat.Data.Models.Warehouse>
+
+@{
+    ViewData["Title"] = "Manage Warehouses";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Add New Warehouse</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>City</th>
+            <th>State/Region</th>
+            <th>Country</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var warehouse in Model)
+        {
+            <tr>
+                <td>@warehouse.Name</td>
+                <td>@warehouse.City</td>
+                <td>@warehouse.StateRegion</td>
+                <td>@warehouse.CountryIso</td>
+                <td>@warehouse.Email</td>
+                <td>@warehouse.Phone</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@warehouse.WarehouseId" class="btn btn-sm btn-warning">Edit</a>
+                    <a asp-action="Details" asp-route-id="@warehouse.WarehouseId" class="btn btn-sm btn-info">Details</a>
+                    <a asp-action="Delete" asp-route-id="@warehouse.WarehouseId" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

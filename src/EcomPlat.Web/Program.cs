@@ -1,6 +1,17 @@
 using EcomPlat.Web.Extensions;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog logging
+var logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .CreateLogger();
+
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(logger);
 
 // Register the distributed memory cache (required for session)
 builder.Services.AddDistributedMemoryCache();

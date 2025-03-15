@@ -57,7 +57,7 @@ namespace EcomPlat.Web.Extensions
             });
 
             // Register BlobService singleton using async initialization (adjust as needed)
-            services.AddTransient<IShippingCostCalculator>(provider =>
+            services.AddTransient<IShippingService>(provider =>
             {
                 return Task.Run(() =>
                 {
@@ -65,7 +65,7 @@ namespace EcomPlat.Web.Extensions
                     var cacheService = scope.ServiceProvider.GetRequiredService<ICacheService>();
                     var easyPostApiKey = cacheService.GetSnippet(SiteConfigSetting.EasyPostApiKey);
 
-                    return new ShippingCostCalculator(easyPostApiKey);
+                    return new ShippingService(easyPostApiKey);
                 }).GetAwaiter().GetResult();
             });
 

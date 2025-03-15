@@ -13,6 +13,7 @@ namespace EcomPlat.Web.Models
         public decimal ShippingAmount { get; set; } = 10;
         public decimal OrderTotal { get; set; }
         public decimal TotalShippingWeight { get; set; }
+        public string Email { get; set; }
         public OrderAddress ShippingAddress { get; set; } = new OrderAddress();
     }
 }

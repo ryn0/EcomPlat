@@ -58,6 +58,9 @@ namespace EcomPlat.Data.Models
         /// </summary>
         public PaymentProcessor PaymentProcessor { get; set; }
 
+        [MaxLength(255)]
+        public string ProcessorInvoiceId { get; set; } = string.Empty;
+
         // Shipping and order summary details
 
         /// <summary>
@@ -69,6 +72,10 @@ namespace EcomPlat.Data.Models
         /// Gets or sets the total amount for the order, including items, shipping, and any additional fees.
         /// </summary>
         public decimal OrderTotal { get; set; }
+
+        public decimal PaidAmount { get; set; }
+
+        public decimal OutcomeAmount { get; set; }
 
         /// <summary>
         /// Gets or sets the shipping charge applied to the order.
@@ -83,6 +90,18 @@ namespace EcomPlat.Data.Models
 
         [MaxLength(100)]
         public string ShipmentTrackingId { get; set; } = string.Empty;
+
+        public string? PaymentResponse { get; set; } = string.Empty;
+
+        /// <summary>
+        /// The request sent to the payment processor when the invoice was created.
+        /// </summary>
+        public string InvoiceRequest { get; set; } = string.Empty;
+
+        /// <summary>
+        /// The response from the payment processor when the invoice was created.
+        /// </summary>
+        public string InvoiceResponse { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the shipping method selected (e.g., Standard, Express, Overnight).

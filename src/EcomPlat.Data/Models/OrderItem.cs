@@ -17,6 +17,8 @@ namespace EcomPlat.Data.Models
         /// </summary>
         public decimal UnitPrice { get; set; }
 
+        public decimal TotalPrice { get; set; }
+
         /// <summary>
         /// Foreign key to the Order
         /// </summary>

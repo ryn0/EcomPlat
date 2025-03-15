@@ -7,5 +7,7 @@
         public const string AccountArea = "Account";
         public const string PublicArea = "Public";
         public const string SelectText = "-- Select --";
+        public const string DeserializationObjectIsNull = "DeserializationObjectIsNull";
+        public const string InvoiceNotFound = "InvoiceNotFound";
     }
 }

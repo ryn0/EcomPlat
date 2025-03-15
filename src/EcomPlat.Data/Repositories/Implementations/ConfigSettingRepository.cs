@@ -2,8 +2,9 @@
 using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Enums;
 using EcomPlat.Data.Models;
+using EcomPlat.Data.Repositories.Interfaces;
 
-namespace EcomPlat.Data.Repositories.Interfaces
+namespace EcomPlat.Data.Repositories.Implementations
 {
     public class ConfigSettingRepository : IConfigSettingRepository
     {

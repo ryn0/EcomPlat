@@ -31,6 +31,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CI", "CI", "{81FCEBEA-13B1-
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcomPlat.Shipping", "EcomPlat.Shipping\EcomPlat.Shipping.csproj", "{A03FB1C6-982A-45B0-89F9-F3D1F1DC3DDC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcomPlat.Shipping.Tests", "EcomPlat.Shipping.Tests\EcomPlat.Shipping.Tests.csproj", "{88559550-AD7D-40EC-8010-8FBFCAA74B59}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NowPayments.API", "NowPayments.API\NowPayments.API.csproj", "{636C96BB-0D61-4182-B493-4531F2C2E285}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,11 +65,20 @@ Global
 		{A03FB1C6-982A-45B0-89F9-F3D1F1DC3DDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A03FB1C6-982A-45B0-89F9-F3D1F1DC3DDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A03FB1C6-982A-45B0-89F9-F3D1F1DC3DDC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88559550-AD7D-40EC-8010-8FBFCAA74B59}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88559550-AD7D-40EC-8010-8FBFCAA74B59}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88559550-AD7D-40EC-8010-8FBFCAA74B59}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88559550-AD7D-40EC-8010-8FBFCAA74B59}.Release|Any CPU.Build.0 = Release|Any CPU
+		{636C96BB-0D61-4182-B493-4531F2C2E285}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{636C96BB-0D61-4182-B493-4531F2C2E285}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{636C96BB-0D61-4182-B493-4531F2C2E285}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{636C96BB-0D61-4182-B493-4531F2C2E285}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{C3AF8B68-8877-4E0C-8D8B-51A9D87D8E33} = {BBC17F42-5F1B-4475-B149-7AFC42346273}
+		{88559550-AD7D-40EC-8010-8FBFCAA74B59} = {BBC17F42-5F1B-4475-B149-7AFC42346273}
 	EndGlobalSection
 EndGlobal

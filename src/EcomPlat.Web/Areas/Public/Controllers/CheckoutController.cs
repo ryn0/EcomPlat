@@ -1,10 +1,7 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using EcomPlat.Data.Constants;
-using EcomPlat.Data.DbContextInfo;
+﻿using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Enums;
 using EcomPlat.Data.Models;
+using EcomPlat.Data.Repositories.Interfaces;
 using EcomPlat.Shipping.Models;
 using EcomPlat.Shipping.Services.Interfaces;
 using EcomPlat.Shipping.Validation;
@@ -21,13 +18,119 @@ namespace EcomPlat.Web.Areas.Public.Controllers
     public class CheckoutController : Controller
     {
         private readonly ApplicationDbContext context;
-        private readonly IShippingCostCalculator shippingCostCalculator;
+        private readonly IShippingService shippingService;
+        private readonly IOrderRepository orderRepository;
 
-        public CheckoutController(ApplicationDbContext context, IShippingCostCalculator shippingCostCalculator)
+
+        public CheckoutController(ApplicationDbContext context, IShippingService shippingService, IOrderRepository orderRepository)
         {
             this.context = context;
-            this.shippingCostCalculator = shippingCostCalculator;
+            this.shippingService = shippingService;
+            this.orderRepository = orderRepository;
+
         }
+
+        // POST: /checkout
+        [HttpPost("")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Checkout(CheckoutViewModel model)
+        {
+            string sessionId = this.HttpContext.Session.Id;
+            var cart = await this.context.ShoppingCarts
+                .Include(c => c.Items)
+                    .ThenInclude(i => i.Product)
+                .FirstOrDefaultAsync(c => c.SessionId == sessionId);
+
+            if (cart == null || !cart.Items.Any())
+            {
+                return this.RedirectToAction("Index", "Products", new { area = "Public" });
+            }
+
+            // Validate stock
+            foreach (var item in cart.Items)
+            {
+                var product = await this.context.Products.FirstOrDefaultAsync(p => p.ProductId == item.ProductId);
+                if (product != null && item.Quantity > product.StockQuantity)
+                {
+                    this.ModelState.AddModelError("", $"The quantity for {product.Name} exceeds available stock. Available: {product.StockQuantity}");
+                }
+            }
+
+            if (!this.ModelState.IsValid)
+            {
+                model.ShippingOptions = Enum.GetValues(typeof(ShippingMethod))
+                    .Cast<ShippingMethod>()
+                    .Select(sm => new SelectListItem
+                    {
+                        Value = sm.ToString(),
+                        Text = sm.ToString(),
+                        Selected = sm == model.SelectedShippingMethod
+                    })
+                    .ToList();
+                return this.View(model);
+            }
+
+            // Retrieve shipping address
+            var shippingAddressJson = this.TempData.Peek("ShippingAddress") as string;
+            if (string.IsNullOrEmpty(shippingAddressJson))
+            {
+                return this.RedirectToAction("ShippingAddress");
+            }
+
+            var shippingAddress = JsonConvert.DeserializeObject<OrderAddress>(shippingAddressJson);
+
+            // Create the Order object
+            var order = new Order
+            {
+                CustomerOrderId = Guid.NewGuid().ToString("N").ToUpper().Substring(0, 12),
+                OrderDate = DateTime.UtcNow,
+                CustomerEmail = model.Email,
+                SalePrice = cart.Items.Sum(i => i.Product.Price * i.Quantity),
+                BillingCurrency = Currency.USD,
+                PaymentCurrency = Currency.USD, // Update based on actual payment currency.
+                PaymentMethod = PaymentMethod.CreditCard, // Change dynamically based on selection.
+                PaymentProcessor = PaymentProcessor.Stripe, // Change dynamically.
+                ShippingWeightOunces = cart.Items.Sum(i => i.Product.ShippingWeightOunces * i.Quantity),
+                ShippingAmount = model.ShippingAmount,
+                OrderTotal = cart.Items.Sum(i => i.Product.Price * i.Quantity) + model.ShippingAmount,
+                ShippingMethod = model.SelectedShippingMethod,
+                PaymentStatus = PaymentStatus.Pending,
+                ShippingStatus = ShippingStatus.NotShipped,
+                ShippingCarrier = ShippingCarrier.USPS, // Change based on the selected carrier.
+                ShipmentTrackingId = "",
+                OrderItems = cart.Items.Select(i => new OrderItem
+                {
+                    ProductId = i.Product.ProductId,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.Product.Price,
+                    TotalPrice = i.Product.Price * i.Quantity
+                }).ToList(),
+                Addresses = new List<OrderAddress> { shippingAddress }
+            };
+
+            // Save order to database
+            await this.orderRepository.CreateAsync(order);
+
+            // Clear the shopping cart after successful order creation
+            this.context.ShoppingCarts.Remove(cart);
+            await this.context.SaveChangesAsync();
+
+            return this.RedirectToAction("OrderConfirmation", new { orderId = order.CustomerOrderId });
+        }
+
+        // GET: /checkout/order-confirmation/{orderId}
+        [HttpGet("order-confirmation/{orderId}")]
+        public async Task<IActionResult> OrderConfirmation(string orderId)
+        {
+            var order = await this.orderRepository.FindByCustomerOrderIdAsync(orderId);
+            if (order == null)
+            {
+                return this.NotFound();
+            }
+
+            return this.View(order);
+        }
+
 
         // GET: /checkout
         [HttpGet("")]
@@ -184,46 +287,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             return this.RedirectToAction("ShippingAddress");
         }
 
-        // POST: /checkout
-        [HttpPost("")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Checkout(CheckoutViewModel model)
-        {
-            string sessionId = this.HttpContext.Session.Id;
-            model.Cart = await this.context.ShoppingCarts
-                .Include(c => c.Items)
-                    .ThenInclude(i => i.Product)
-                .FirstOrDefaultAsync(c => c.SessionId == sessionId);
-
-            // Validate cart items against stock.
-            foreach (var item in model.Cart.Items)
-            {
-                var product = await this.context.Products.FirstOrDefaultAsync(p => p.ProductId == item.ProductId);
-                if (product != null && item.Quantity > product.StockQuantity)
-                {
-                    this.ModelState.AddModelError("", $"The quantity for {product.Name} exceeds available stock. Available: {product.StockQuantity}");
-                }
-            }
-
-            if (!this.ModelState.IsValid)
-            {
-                model.ShippingOptions = Enum.GetValues(typeof(ShippingMethod))
-                    .Cast<ShippingMethod>()
-                    .Select(sm => new SelectListItem
-                    {
-                        Value = sm.ToString(),
-                        Text = sm.ToString(),
-                        Selected = sm == model.SelectedShippingMethod
-                    })
-                    .ToList();
-                return this.View(model);
-            }
-
-            // TODO: Process the order.
-
-            return this.RedirectToAction("OrderConfirmation", "Checkout", new { area = "Public" });
-        }
-
+     
         private async Task<ShippingCostResult> GetShippingCostAsync(
             CheckoutViewModel viewModel,
             EasyPost.Models.API.Address fromAddress,
@@ -246,7 +310,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             }
 
 
-            return await this.shippingCostCalculator.CalculateShippingCostAsync(shippingCart, fromAddress, toAddress);
+            return await this.shippingService.CalculateShippingCostAsync(shippingCart, fromAddress, toAddress);
         }
 
         private async Task<EasyPost.Models.API.Address> SetBusinessAddress()

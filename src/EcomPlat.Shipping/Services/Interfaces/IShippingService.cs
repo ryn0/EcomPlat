@@ -4,10 +4,7 @@ using EcomPlat.Shipping.Models;
 namespace EcomPlat.Shipping.Services.Interfaces
 
 {
-    /// <summary>
-    /// Calculates shipping costs using EasyPost API.
-    /// </summary>
-    public interface IShippingCostCalculator
+    public interface IShippingService
     {
         /// <summary>
         /// Calculates the shipping cost based on the contents of the shopping cart and the shipment addresses.

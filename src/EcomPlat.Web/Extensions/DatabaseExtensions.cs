@@ -1,4 +1,5 @@
 ﻿using EcomPlat.Data.DbContextInfo;
+using EcomPlat.Data.Repositories.Implementations;
 using EcomPlat.Data.Repositories.Interfaces;
 
 namespace EcomPlat.Web.Extensions
@@ -16,6 +17,7 @@ namespace EcomPlat.Web.Extensions
             services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
             services.AddScoped<IConfigSettingRepository, ConfigSettingRepository>();
+            services.AddScoped<IOrderRepository, OrderRepository>();
 
             return services;
         }

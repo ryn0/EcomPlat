@@ -62,6 +62,7 @@ else
     </table>
 
     <p><strong>Cart Total (without shipping):</strong> @Model.OrderTotal.ToString("C")</p>
+    <p><strong>Total Shipping Weight:</strong> @Model.TotalShippingWeight.ToString("N2") oz</p>
     <p><strong>Shipping Charge:</strong> @Model.ShippingAmount.ToString("C")</p>
     <p><strong>Grand Total:</strong> @((Model.OrderTotal + Model.ShippingAmount).ToString("C"))</p>
 

@@ -17,5 +17,7 @@ namespace EcomPlat.Shipping.Services.Interfaces
         /// <param name="toAddress">The shipment’s destination address.</param>
         /// <returns>A ShippingCostResult containing the calculated shipping cost and details.</returns>
         Task<ShippingCostResult> CalculateShippingCostAsync(ShoppingCart cart, Address fromAddress, Address toAddress);
+
+        Task<ShippingLabelResult> PurchaseShippingLabelAsync(ShoppingCart cart, Address fromAddress, Address toAddress);
     }
 }

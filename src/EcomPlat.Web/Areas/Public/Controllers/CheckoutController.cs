@@ -1,4 +1,8 @@
-﻿using EcomPlat.Data.DbContextInfo;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+using EcomPlat.Data.Constants;
+using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Enums;
 using EcomPlat.Data.Models;
 using EcomPlat.Shipping.Models;
@@ -30,7 +34,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
         public async Task<IActionResult> Index()
         {
             // Ensure session exists.
-            this.HttpContext.Session.Set("Init", [1]);
+            this.HttpContext.Session.Set("Init", new byte[] { 1 });
             string sessionId = this.HttpContext.Session.Id;
 
             // Load the shopping cart.
@@ -45,6 +49,8 @@ namespace EcomPlat.Web.Areas.Public.Controllers
 
             // Calculate order total.
             decimal orderTotal = cart.Items.Sum(i => i.Product.Price * i.Quantity);
+            // Calculate total shipping weight (in ounces).
+            decimal totalShippingWeight = cart.Items.Sum(i => i.Product.ShippingWeightOunces * i.Quantity);
 
             var shippingOptions = Enum.GetValues(typeof(ShippingMethod))
                 .Cast<ShippingMethod>()
@@ -60,6 +66,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             {
                 Cart = cart,
                 OrderTotal = orderTotal,
+                TotalShippingWeight = totalShippingWeight,
                 ShippingOptions = shippingOptions,
                 SelectedShippingMethod = defaultShipping,
                 ShippingAddress = new OrderAddress() // default new address
@@ -115,14 +122,14 @@ namespace EcomPlat.Web.Areas.Public.Controllers
         // POST: /checkout/shipping-address
         [HttpPost("shipping-address")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ShippingAddress(Data.Models.OrderAddress address)
+        public async Task<IActionResult> ShippingAddress(OrderAddress address)
         {
-            // Remove any ModelState errors for properties not needed in this context.
+            // Remove ModelState errors for fields not needed.
             this.ModelState.Remove("Order");
             this.ModelState.Remove("OrderId");
             this.ModelState.Remove("CountryIso");
 
-            // Retrieve the EasyPost API key from configuration.
+            // Retrieve the EasyPost API key.
             var apiKeySetting = await this.context.ConfigSettings
                 .FirstOrDefaultAsync(cs => cs.SiteConfigSetting == SiteConfigSetting.EasyPostApiKey);
 
@@ -132,7 +139,6 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             }
             else
             {
-                // Initialize EasyPost.
                 AddressValidator.Initialize(apiKeySetting.Content);
                 var validationResult = await AddressValidator.ValidateAddressAsync(
                     address.AddressLine1,
@@ -141,6 +147,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                     address.StateRegion,
                     address.PostalCode,
                     address.CountryIso);
+
                 if (!validationResult.IsValid)
                 {
                     var errorMsg = string.IsNullOrWhiteSpace(validationResult.ErrorMessage)
@@ -150,7 +157,6 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 }
                 else
                 {
-                    // Use the verified address values.
                     address.AddressLine1 = validationResult.VerifiedAddress.Street1;
                     address.AddressLine2 = validationResult.VerifiedAddress.Street2;
                     address.City = validationResult.VerifiedAddress.City;
@@ -166,7 +172,6 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 return this.View(address);
             }
 
-            // Save the validated shipping address in TempData.
             this.TempData["ShippingAddress"] = JsonConvert.SerializeObject(address);
             return this.RedirectToAction("Index");
         }
@@ -175,7 +180,6 @@ namespace EcomPlat.Web.Areas.Public.Controllers
         [HttpGet("edit-address")]
         public IActionResult EditShippingAddress()
         {
-            // Clear the saved shipping address to force re-entry.
             this.TempData.Remove("ShippingAddress");
             return this.RedirectToAction("ShippingAddress");
         }
@@ -191,7 +195,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                     .ThenInclude(i => i.Product)
                 .FirstOrDefaultAsync(c => c.SessionId == sessionId);
 
-            // Validate each cart item against stock.
+            // Validate cart items against stock.
             foreach (var item in model.Cart.Items)
             {
                 var product = await this.context.Products.FirstOrDefaultAsync(p => p.ProductId == item.ProductId);
@@ -215,7 +219,8 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 return this.View(model);
             }
 
-            // TODO: Process the order (create Order record, process payment, etc.)
+            // TODO: Process the order.
+
             return this.RedirectToAction("OrderConfirmation", "Checkout", new { area = "Public" });
         }
 
@@ -224,7 +229,6 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             EasyPost.Models.API.Address fromAddress,
             EasyPost.Models.API.Address toAddress)
         {
-            // Build a shopping cart for EasyPost.
             var shippingCart = new Shipping.Models.ShoppingCart();
             foreach (var item in viewModel.Cart.Items)
             {
@@ -241,9 +245,10 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 });
             }
 
+
             return await this.shippingCostCalculator.CalculateShippingCostAsync(shippingCart, fromAddress, toAddress);
         }
- 
+
         private async Task<EasyPost.Models.API.Address> SetBusinessAddress()
         {
             var businessDetails = await this.context.BusinessDetails.FirstOrDefaultAsync()

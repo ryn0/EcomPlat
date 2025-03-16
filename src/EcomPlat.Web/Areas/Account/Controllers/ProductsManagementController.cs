@@ -29,15 +29,33 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             this.siteFilesRepository = siteFilesRepository;
         }
 
-        public async Task<IActionResult> Index(int page = 1, int pageSize = 10)
+        public async Task<IActionResult> Index(string searchQuery, int page = 1, int pageSize = 10)
         {
-            int totalProducts = await this.context.Products.CountAsync();
-            var products = await this.context.Products
-                .OrderByDescending(x => x.CreateDate)
+            IQueryable<Product> query = this.context.Products
+                .Include(p => p.Images.Where(i => i.IsMain))
                 .Include(p => p.Subcategory)
-                    .ThenInclude(s => s.Category)
                 .Include(p => p.Company)
-                .Include(p => p.Images.Where(x => x.IsMain == true))
+                .OrderByDescending(p => p.CreateDate);
+
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                // Check if input is a product URL and extract ProductKey
+                var productKey = this.ExtractProductKeyFromUrl(searchQuery);
+                if (!string.IsNullOrEmpty(productKey))
+                {
+                    query = query.Where(p => p.ProductKey == productKey);
+                }
+                else
+                {
+                    // Perform full-text search on Name & Description
+                    query = query.Where(p =>
+                        p.Name.Contains(searchQuery) ||
+                        p.Description.Contains(searchQuery));
+                }
+            }
+
+            int totalProducts = await query.CountAsync();
+            var products = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
@@ -45,9 +63,11 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             this.ViewData["CurrentPage"] = page;
             this.ViewData["PageSize"] = pageSize;
             this.ViewData["TotalProducts"] = totalProducts;
+            this.ViewData["SearchQuery"] = searchQuery;
 
             return this.View(products);
         }
+
 
         public async Task<IActionResult> Details(int? id)
         {
@@ -567,6 +587,19 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 currentMaxOrder = existingImages.Max(pi => pi.DisplayOrder);
             }
             return currentMaxOrder;
+        }
+        private string ExtractProductKeyFromUrl(string input)
+        {
+            if (Uri.TryCreate(input, UriKind.Absolute, out Uri uri))
+            {
+                string[] segments = uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+                int index = Array.IndexOf(segments, "product");
+                if (index >= 0 && index + 1 < segments.Length)
+                {
+                    return segments[index + 1]; // Product Key from URL
+                }
+            }
+            return null;
         }
 
         /// <summary>

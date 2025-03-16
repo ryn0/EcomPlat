@@ -1,0 +1,8 @@
+﻿@model string
+<form method="get" asp-action="Index" class="mb-3">
+    <div class="input-group">
+        <input type="text" id="searchQuery" name="searchQuery" value="@Model" class="form-control"
+               placeholder="Search by product name, description, or paste a product URL..." />
+        <button type="submit" class="btn btn-primary">Search</button>
+    </div>
+</form>

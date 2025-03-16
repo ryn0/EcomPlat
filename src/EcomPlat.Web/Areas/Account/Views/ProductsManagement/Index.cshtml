@@ -14,6 +14,9 @@
     <a asp-action="Create" class="btn btn-primary">Add New Product</a>
 </p>
 
+@await Html.PartialAsync("_ProductSearchPartial", ViewData["SearchQuery"] as string)
+
+
 <span>Total: @totalProducts</span>
 
 <table class="table">

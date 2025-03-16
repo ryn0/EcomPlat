@@ -4,6 +4,7 @@
     {
         Unknown = 0,
         Stripe = 1,
-        PayPal = 2
+        PayPal = 2,
+        NowPayments = 3
     }
 }

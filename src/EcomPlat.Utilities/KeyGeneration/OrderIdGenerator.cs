@@ -1,39 +1,25 @@
-﻿using System.Security.Cryptography;
+﻿using System;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace EcomPlat.Utilities.KeyGeneration
 {
     public static class OrderIdGenerator
     {
-        private static readonly char[] AllowedChars = "34679ACDFGHJKMNPQRTUVWXY".ToCharArray();
-
-        // List of substrings that are not allowed in the generated order ID.
-        private static readonly string[] ForbiddenSubstrings =
-        [
-            "FUCK", "DAMN", "CRAP", "CUNT", "GAY", "FAG"
-        ];
-
         /// <summary>
-        /// Generates a non-sequential, customer-friendly order ID that avoids forbidden substrings.
+        /// Generates a 16-character numeric order ID string.
         /// </summary>
-        /// <param name="length">The length of the order ID string (default is 8).</param>
-        /// <returns>A randomly generated order ID string.</returns>
-        public static string GenerateOrderId(int length = 8)
+        /// <returns>A randomly generated 16-character order ID string.</returns>
+        public static string GenerateOrderId()
         {
-            string orderId;
-            do
-            {
-                orderId = GenerateCandidate(length);
-            }
-            while (ContainsForbiddenSubstring(orderId));
-
+            var orderId = GenerateCandidate(16);
             return orderId;
         }
 
         private static string GenerateCandidate(int length)
         {
-            var orderIdChars = new char[length];
+            var orderIdBuilder = new StringBuilder(length);
 
-            // Use a cryptographically secure random generator.
             using (var rng = RandomNumberGenerator.Create())
             {
                 byte[] randomBytes = new byte[length];
@@ -41,24 +27,12 @@ namespace EcomPlat.Utilities.KeyGeneration
 
                 for (int i = 0; i < length; i++)
                 {
-                    int index = randomBytes[i] % AllowedChars.Length;
-                    orderIdChars[i] = AllowedChars[index];
+                    int digit = randomBytes[i] % 10; // Generates a digit between 0-9
+                    orderIdBuilder.Append(digit);
                 }
             }
 
-            return new string(orderIdChars);
-        }
-
-        private static bool ContainsForbiddenSubstring(string candidate)
-        {
-            foreach (var forbidden in ForbiddenSubstrings)
-            {
-                if (candidate.Contains(forbidden))
-                {
-                    return true;
-                }
-            }
-            return false;
+            return orderIdBuilder.ToString();
         }
     }
 }

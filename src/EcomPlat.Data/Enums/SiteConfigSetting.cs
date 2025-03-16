@@ -7,6 +7,8 @@
         CdnPrefixWithProtocol = 2,
         BlobPrefix = 3,
         FullRootUrl = 4,
-        EasyPostApiKey = 5
+        EasyPostApiKey = 5,
+        NowPaymentsConfigJson = 6,
+        SendGridConfigJson = 7,
     }
 }

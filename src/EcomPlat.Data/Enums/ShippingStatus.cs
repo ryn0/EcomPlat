@@ -3,9 +3,10 @@
     public enum ShippingStatus
     {
         Unknown = 0,
-        NotShipped = 0,
-        ShippedBy = 1,
-        Delivered = 2,
-        Returned = 3,
+        Pending = 1,
+        LabelCreated = 2,
+        Shipped = 3,
+        Delivered =4,
+        Returned = 5,
     }
 }

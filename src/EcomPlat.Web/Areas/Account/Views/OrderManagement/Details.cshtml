@@ -1,0 +1,94 @@
+﻿@using EcomPlat.Data.Enums
+@model EcomPlat.Data.Models.Order
+
+@{
+    ViewData["Title"] = $"Order Details - {Model.CustomerOrderId}";
+}
+
+<h2>Order Details</h2>
+<p><strong>Customer Order Id:</strong> @Model.CustomerOrderId</p>
+
+<h4>Customer Info</h4>
+<p><strong>Email:</strong> @Model.CustomerEmail</p>
+<p><strong>Order Date:</strong> @Model.OrderDate.ToString("f")</p>
+<p><strong>Total:</strong> @Model.OrderTotal.ToString("C")</p>
+
+<h4>Shipping Info</h4>
+<p>
+    <strong>Address:</strong>
+    @Model.Addresses.FirstOrDefault()?.AddressLine1,
+    @Model.Addresses.FirstOrDefault()?.City,
+    @Model.Addresses.FirstOrDefault()?.StateRegion
+    @Model.Addresses.FirstOrDefault()?.PostalCode,
+    @Model.Addresses.FirstOrDefault()?.CountryIso
+</p>
+<p><strong>Shipping Carrier:</strong> @Model.ShippingCarrier</p>
+<p><strong>Tracking ID:</strong> @Model.ShipmentTrackingId</p>
+<p><strong>Shipping Status:</strong> @Model.ShippingStatus</p>
+<p><strong>Processor Invoice Id:</strong> @Model.ProcessorInvoiceId</p>
+<p><strong>Payment Processor:</strong> @Model.PaymentProcessor</p>
+<p><strong>Payment Currency:</strong> @Model.PaymentCurrency</p>
+<p><strong>Payment Status:</strong> @Model.PaymentStatus</p>
+
+@if (!string.IsNullOrEmpty(Model.ShipmentTrackingId))
+{
+    <p>
+        <strong>USPS Tracking Link:</strong>
+        <a href="https://tools.usps.com/go/TrackConfirmAction_input?strOrigTrackNum=@Model.ShipmentTrackingId" target="_blank">
+            Track Shipment
+        </a>
+    </p>
+}
+
+@if (Model.ShippingStatus == ShippingStatus.Pending)
+{
+    <form method="post" asp-action="BuyLabel" asp-route-orderId="@Model.OrderId">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-success">Buy Shipping Label</button>
+    </form>
+}
+
+<h4>Shipping Label</h4>
+@if (!string.IsNullOrEmpty(Model.ShippingLabelUrl))
+{
+    <div>
+        <img src="@Model.ShippingLabelUrl" alt="Shipping Label" class="img-fluid border" style="max-width: 400px;" />
+        <br />
+        <a href="@Model.ShippingLabelUrl" target="_blank" class="btn btn-primary mt-2">Print Label</a>
+    </div>
+}
+else
+{
+    <p>No shipping label has been generated yet.</p>
+}
+
+@if (!string.IsNullOrEmpty(Model.ShippingLabelUrl) && Model.ShippingStatus == ShippingStatus.Pending)
+{
+    <form method="post" asp-action="MarkAsShipped" asp-route-orderId="@Model.OrderId" class="mt-3">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-warning">Mark as Shipped</button>
+    </form>
+}
+
+<h4>Items</h4>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Subtotal</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.OrderItems)
+        {
+            <tr>
+                <td>@item.Product.Name</td>
+                <td>@item.Quantity</td>
+                <td>@item.UnitPrice.ToString("C")</td>
+                <td>@((item.UnitPrice * item.Quantity).ToString("C"))</td>
+            </tr>
+        }
+    </tbody>
+</table>

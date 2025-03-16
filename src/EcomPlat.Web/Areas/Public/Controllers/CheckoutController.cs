@@ -5,11 +5,16 @@ using EcomPlat.Data.Repositories.Interfaces;
 using EcomPlat.Shipping.Models;
 using EcomPlat.Shipping.Services.Interfaces;
 using EcomPlat.Shipping.Validation;
+using EcomPlat.Utilities.KeyGeneration;
+using EcomPlat.Web.Constants;
 using EcomPlat.Web.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using NowPayments.API.Interfaces;
+using NowPayments.API.Models;
 
 namespace EcomPlat.Web.Areas.Public.Controllers
 {
@@ -17,29 +22,33 @@ namespace EcomPlat.Web.Areas.Public.Controllers
     [Route("checkout")]
     public class CheckoutController : Controller
     {
+        private const decimal ShippingChargeUSD = 5;
         private readonly ApplicationDbContext context;
         private readonly IShippingService shippingService;
         private readonly IOrderRepository orderRepository;
+        private readonly INowPaymentsService paymentService;
 
-
-        public CheckoutController(ApplicationDbContext context, IShippingService shippingService, IOrderRepository orderRepository)
+        public CheckoutController(
+            ApplicationDbContext context,
+            IShippingService shippingService,
+            IOrderRepository orderRepository,
+            INowPaymentsService paymentService)
         {
             this.context = context;
             this.shippingService = shippingService;
             this.orderRepository = orderRepository;
-
+            this.paymentService = paymentService;
         }
+
 
         // POST: /checkout
         [HttpPost("")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Checkout(CheckoutViewModel model)
+        public async Task<IActionResult> Checkout(CheckoutModel checkoutModel)
         {
+            this.HttpContext.Session.Set("Init", new byte[] { 1 });
             string sessionId = this.HttpContext.Session.Id;
-            var cart = await this.context.ShoppingCarts
-                .Include(c => c.Items)
-                    .ThenInclude(i => i.Product)
-                .FirstOrDefaultAsync(c => c.SessionId == sessionId);
+            Data.Models.ShoppingCart? cart = await this.GetCart(sessionId);
 
             if (cart == null || !cart.Items.Any())
             {
@@ -58,16 +67,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
 
             if (!this.ModelState.IsValid)
             {
-                model.ShippingOptions = Enum.GetValues(typeof(ShippingMethod))
-                    .Cast<ShippingMethod>()
-                    .Select(sm => new SelectListItem
-                    {
-                        Value = sm.ToString(),
-                        Text = sm.ToString(),
-                        Selected = sm == model.SelectedShippingMethod
-                    })
-                    .ToList();
-                return this.View(model);
+                return this.View();
             }
 
             // Retrieve shipping address
@@ -78,35 +78,13 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             }
 
             var shippingAddress = JsonConvert.DeserializeObject<OrderAddress>(shippingAddressJson);
+            CheckoutViewModel checkoutViewModel = BuildCheckoutModel(cart);
+            Order order = BuildOrder(checkoutViewModel, checkoutModel, cart, shippingAddress);
 
-            // Create the Order object
-            var order = new Order
+            while (await this.orderRepository.FindByCustomerOrderIdAsync(order.CustomerOrderId) != null)
             {
-                CustomerOrderId = Guid.NewGuid().ToString("N").ToUpper().Substring(0, 12),
-                OrderDate = DateTime.UtcNow,
-                CustomerEmail = model.Email,
-                SalePrice = cart.Items.Sum(i => i.Product.Price * i.Quantity),
-                BillingCurrency = Currency.USD,
-                PaymentCurrency = Currency.USD, // Update based on actual payment currency.
-                PaymentMethod = PaymentMethod.CreditCard, // Change dynamically based on selection.
-                PaymentProcessor = PaymentProcessor.Stripe, // Change dynamically.
-                ShippingWeightOunces = cart.Items.Sum(i => i.Product.ShippingWeightOunces * i.Quantity),
-                ShippingAmount = model.ShippingAmount,
-                OrderTotal = cart.Items.Sum(i => i.Product.Price * i.Quantity) + model.ShippingAmount,
-                ShippingMethod = model.SelectedShippingMethod,
-                PaymentStatus = PaymentStatus.Pending,
-                ShippingStatus = ShippingStatus.NotShipped,
-                ShippingCarrier = ShippingCarrier.USPS, // Change based on the selected carrier.
-                ShipmentTrackingId = "",
-                OrderItems = cart.Items.Select(i => new OrderItem
-                {
-                    ProductId = i.Product.ProductId,
-                    Quantity = i.Quantity,
-                    UnitPrice = i.Product.Price,
-                    TotalPrice = i.Product.Price * i.Quantity
-                }).ToList(),
-                Addresses = new List<OrderAddress> { shippingAddress }
-            };
+                order.CustomerOrderId = OrderIdGenerator.GenerateOrderId();
+            }
 
             // Save order to database
             await this.orderRepository.CreateAsync(order);
@@ -115,22 +93,28 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             this.context.ShoppingCarts.Remove(cart);
             await this.context.SaveChangesAsync();
 
-            return this.RedirectToAction("OrderConfirmation", new { orderId = order.CustomerOrderId });
-        }
-
-        // GET: /checkout/order-confirmation/{orderId}
-        [HttpGet("order-confirmation/{orderId}")]
-        public async Task<IActionResult> OrderConfirmation(string orderId)
-        {
-            var order = await this.orderRepository.FindByCustomerOrderIdAsync(orderId);
-            if (order == null)
+            // Handle Crypto Payment Redirect
+            var paymentRequest = new PaymentRequest
             {
-                return this.NotFound();
-            }
+                OrderId = order.CustomerOrderId,
+                PriceAmount = order.OrderTotal,
+                PriceCurrency = Currency.USD.ToString(),
+                IsFeePaidByUser = true,
+                OrderDescription = $"Order: {order.CustomerOrderId}",
+                PayCurrency = Currency.XMR.ToString()
+            };
 
-            return this.View(order);
+            this.paymentService.SetDefaultUrls(paymentRequest);
+
+            var invoiceFromProcessor = await this.paymentService.CreateInvoice(paymentRequest);
+
+            order.ProcessorInvoiceId = invoiceFromProcessor?.Id;
+            order.PaymentResponse = invoiceFromProcessor.InvoiceUrl;
+
+            await this.orderRepository.UpdateAsync(order);
+
+            return this.Redirect(invoiceFromProcessor.InvoiceUrl);
         }
-
 
         // GET: /checkout
         [HttpGet("")]
@@ -140,40 +124,14 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             this.HttpContext.Session.Set("Init", new byte[] { 1 });
             string sessionId = this.HttpContext.Session.Id;
 
-            // Load the shopping cart.
-            var cart = await this.context.ShoppingCarts
-                .Include(c => c.Items)
-                    .ThenInclude(i => i.Product)
-                .FirstOrDefaultAsync(c => c.SessionId == sessionId);
+            Data.Models.ShoppingCart? cart = await this.GetCart(sessionId);
+
             if (cart == null || !cart.Items.Any())
             {
                 return this.RedirectToAction("Index", "Products", new { area = "Public" });
             }
 
-            // Calculate order total.
-            decimal orderTotal = cart.Items.Sum(i => i.Product.Price * i.Quantity);
-            // Calculate total shipping weight (in ounces).
-            decimal totalShippingWeight = cart.Items.Sum(i => i.Product.ShippingWeightOunces * i.Quantity);
-
-            var shippingOptions = Enum.GetValues(typeof(ShippingMethod))
-                .Cast<ShippingMethod>()
-                .Select(sm => new SelectListItem
-                {
-                    Value = sm.ToString(),
-                    Text = sm.ToString()
-                })
-                .ToList();
-            ShippingMethod defaultShipping = ShippingMethod.Standard;
-
-            var viewModel = new CheckoutViewModel
-            {
-                Cart = cart,
-                OrderTotal = orderTotal,
-                TotalShippingWeight = totalShippingWeight,
-                ShippingOptions = shippingOptions,
-                SelectedShippingMethod = defaultShipping,
-                ShippingAddress = new OrderAddress() // default new address
-            };
+            CheckoutViewModel viewModel = BuildCheckoutModel(cart);
 
             // Load shipping address from TempData.
             var shippingAddressJson = this.TempData.Peek("ShippingAddress") as string;
@@ -188,7 +146,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             }
 
             // Retrieve the business shipping address from BusinessDetails.
-            var fromAddress = await this.SetBusinessAddress();
+            var fromAddress = await this.GetBusinessAddress();
 
             var toAddress = new EasyPost.Models.API.Address()
             {
@@ -203,9 +161,114 @@ namespace EcomPlat.Web.Areas.Public.Controllers
 
             // Get the shipping cost using the business (fromAddress) and customer (toAddress) addresses.
             var shippingCostResult = await this.GetShippingCostAsync(viewModel, fromAddress, toAddress);
-            viewModel.ShippingAmount = shippingCostResult.Cost;
+            var shippingTotal = shippingCostResult.Cost + ShippingChargeUSD;
+            viewModel.ShippingAmount = shippingTotal;
 
             return this.View(viewModel);
+        }
+
+        [HttpGet("canceled")]
+        public async Task<IActionResult> Canceled()
+        {
+            return this.View();
+        }
+
+        [HttpGet("checkout/partiallypaid")]
+        public async Task<IActionResult> PartiallyPaid()
+        {
+            return this.View();
+        }
+
+        [HttpGet("nowpaymentssuccess")]
+        [AllowAnonymous]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+               "StyleCop.CSharp.NamingRules",
+               "SA1313:Parameter names should begin with lower-case letter",
+               Justification = "This is the param from them")]
+        public async Task<IActionResult> NowPaymentsSuccess([FromQuery] string NP_id)
+        {
+            var processorInvoice = await this.paymentService.GetPaymentStatusAsync(NP_id);
+
+            if (processorInvoice == null)
+            {
+                return this.BadRequest(new { Error = StringConstants.InvoiceNotFound });
+            }
+
+            if (processorInvoice.OrderId == null)
+            {
+                return this.BadRequest(new { Error = "Order ID not found." });
+            }
+
+            var order = await this.orderRepository.FindByCustomerOrderIdAsync(processorInvoice.OrderId);
+
+            if (order == null)
+            {
+                return this.BadRequest(new { Error = StringConstants.InvoiceNotFound });
+            }
+
+            order.PaymentStatus = PaymentStatus.Paid;
+            order.PaymentResponse = NP_id;
+
+            var viewModel = new SuccessViewModel
+            {
+                CustomerOrderId = order.CustomerOrderId
+            };
+
+            return this.View("Success", viewModel);
+        }
+
+        private async Task<Data.Models.ShoppingCart?> GetCart(string sessionId)
+        {
+            // Load the shopping cart.
+            return await this.context.ShoppingCarts
+                .Include(c => c.Items)
+                    .ThenInclude(i => i.Product)
+                .FirstOrDefaultAsync(c => c.SessionId == sessionId);
+        }
+
+        private static CheckoutViewModel BuildCheckoutModel(Data.Models.ShoppingCart? cart)
+        {
+            // Calculate order total.
+            decimal orderTotal = cart.Items.Sum(i => i.Product.Price * i.Quantity);
+            // Calculate total shipping weight (in ounces).
+            decimal totalShippingWeight = cart.Items.Sum(i => i.Product.ShippingWeightOunces * i.Quantity);
+            decimal totalProductWeight = cart.Items.Sum(i => i.Product.ProductWeightOunces * i.Quantity);
+
+            var shippingOptions = Enum.GetValues(typeof(ShippingMethod))
+                .Cast<ShippingMethod>()
+                .Select(sm => new SelectListItem
+                {
+                    Value = sm.ToString(),
+                    Text = sm.ToString()
+                })
+                .ToList();
+
+            ShippingMethod defaultShipping = ShippingMethod.Standard;
+
+            var viewModel = new CheckoutViewModel
+            {
+                Cart = cart,
+                OrderItemsTotal = orderTotal,
+                TotalShippingWeight = totalShippingWeight,
+                TotalProductWeight = totalProductWeight,
+                ShippingOptions = shippingOptions,
+                SelectedShippingMethod = defaultShipping,
+                ShippingAddress = new OrderAddress() // default new address
+            };
+            return viewModel;
+        }
+
+        // GET: /checkout/order-confirmation/{orderId}
+        [HttpGet("order-confirmation/{orderId}")]
+        public async Task<IActionResult> OrderConfirmation(string orderId)
+        {
+            var order = await this.orderRepository.FindByCustomerOrderIdAsync(orderId);
+            if (order == null)
+            {
+                return this.NotFound();
+            }
+
+            return this.View(order);
         }
 
         // GET: /checkout/shipping-address
@@ -287,7 +350,73 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             return this.RedirectToAction("ShippingAddress");
         }
 
-     
+        private static Order BuildOrder(
+            CheckoutViewModel checkoutViewModel,
+            CheckoutModel checkoutModel,
+            Data.Models.ShoppingCart? cart,
+            OrderAddress? shippingAddress)
+        {
+            // Create the Order object
+            var order = new Order
+            {
+                CustomerOrderId = OrderIdGenerator.GenerateOrderId(),
+                OrderDate = DateTime.UtcNow,
+                CustomerEmail = checkoutModel.Email,
+                SalePrice = cart.Items.Sum(i => i.Product.Price * i.Quantity),
+                BillingCurrency = Currency.USD,
+                PaymentCurrency = Currency.Unknown,
+                PaymentMethod = checkoutViewModel.PaymentMethod, // Change dynamically based on selection.
+                PaymentProcessor = PaymentProcessor.NowPayments, // Change dynamically.
+                ShippingWeightOunces = cart.Items.Sum(i => i.Product.ShippingWeightOunces * i.Quantity),
+                ShippingAmount = checkoutViewModel.ShippingAmount,
+                OrderTotal = checkoutViewModel.GrandTotal,
+                ShippingMethod = checkoutViewModel.SelectedShippingMethod,
+                PaymentStatus = PaymentStatus.Pending,
+                ShippingStatus = ShippingStatus.Pending,
+                ShippingCarrier = ShippingCarrier.USPS, // Change based on the selected carrier.
+                ShipmentTrackingId = string.Empty,
+                OrderItems = cart.Items.Select(i => new OrderItem
+                {
+                    ProductId = i.Product.ProductId,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.Product.Price,
+                    TotalPrice = i.Product.Price * i.Quantity
+                }).ToList(),
+                Addresses = new List<OrderAddress> { shippingAddress }
+            };
+            return order;
+        }
+
+
+        [HttpPost]
+        [AllowAnonymous]
+        [Route("checkout/confirmnowpayments")]
+        public async Task<IActionResult> ConfirmedNowPaymentsAsync()
+        {
+            string sessionId = this.HttpContext.Session.Id;
+
+            // Load the shopping cart.
+            var cart = await this.context.ShoppingCarts
+                .Include(c => c.Items)
+                    .ThenInclude(i => i.Product)
+                .FirstOrDefaultAsync(c => c.SessionId == sessionId);
+
+            if (cart == null || !cart.Items.Any())
+            {
+                return this.RedirectToAction("Index", "Products", new { area = "Public" });
+            }
+
+            var paymentRequest = new PaymentRequest()
+            {
+                // todo
+            };
+
+
+            var invoiceFromProcessor = await this.paymentService.CreateInvoice(paymentRequest);
+
+            return this.Redirect(invoiceFromProcessor.InvoiceUrl);
+        }
+ 
         private async Task<ShippingCostResult> GetShippingCostAsync(
             CheckoutViewModel viewModel,
             EasyPost.Models.API.Address fromAddress,
@@ -313,7 +442,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             return await this.shippingService.CalculateShippingCostAsync(shippingCart, fromAddress, toAddress);
         }
 
-        private async Task<EasyPost.Models.API.Address> SetBusinessAddress()
+        private async Task<EasyPost.Models.API.Address> GetBusinessAddress()
         {
             var businessDetails = await this.context.BusinessDetails.FirstOrDefaultAsync()
                 ?? throw new Exception("Business shipping address is not configured.");

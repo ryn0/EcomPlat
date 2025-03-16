@@ -117,5 +117,7 @@ namespace EcomPlat.Data.Models
         /// Gets or sets the collection of addresses associated with the order (such as billing and shipping addresses).
         /// </summary>
         public ICollection<OrderAddress> Addresses { get; set; } = new List<OrderAddress>();
+        public string? ShippingLabelUrl { get; set; } = string.Empty;
+        public string? Notes { get; set; } = string.Empty;
     }
 }

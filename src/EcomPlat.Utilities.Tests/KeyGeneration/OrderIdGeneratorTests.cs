@@ -1,70 +1,63 @@
 ﻿using EcomPlat.Utilities.KeyGeneration;
+using Xunit;
 
 namespace EcomPlat.Tests.Utilities.KeyGeneration
 {
     public class OrderIdGeneratorTests
     {
         [Fact]
-        public void GenerateOrderId_ReturnsStringOfSpecifiedLength()
+        public void GenerateOrderId_ReturnsStringOfFixed16Digits()
         {
-            // Arrange
-            int expectedLength = 8;
-
             // Act
-            string orderId = OrderIdGenerator.GenerateOrderId(expectedLength);
+            string orderId = OrderIdGenerator.GenerateOrderId();
 
             // Assert
             Assert.NotNull(orderId);
-            Assert.Equal(expectedLength, orderId.Length);
+            Assert.Equal(16, orderId.Length);
+            Assert.All(orderId, c => Assert.InRange(c, '0', '9')); // Ensure all characters are digits (0-9)
         }
 
         [Fact]
-        public void GenerateOrderId_ContainsOnlyAllowedCharacters()
+        public void GenerateOrderId_ContainsOnlyDigits()
         {
-            // Arrange
-            int length = 12;
-            // This string should match the allowed characters defined in OrderIdGenerator.
-            string allowedChars = "34679ACDFGHJKMNPQRTUVWXY";
-
             // Act
-            string orderId = OrderIdGenerator.GenerateOrderId(length);
+            string orderId = OrderIdGenerator.GenerateOrderId();
 
             // Assert
-            foreach (char c in orderId)
-            {
-                Assert.Contains(c, allowedChars);
-            }
+            Assert.All(orderId, c => Assert.True(char.IsDigit(c))); // Ensure each character is a digit
         }
 
         [Fact]
-        public void GenerateOrderId_DoesNotContainForbiddenSubstrings()
+        public void GenerateOrderId_AllowsLeadingZeros()
         {
-            // Arrange
-            int length = 10;
-            string[] forbiddenSubstrings = { "FUCK", "DAMN", "CRAP", "CUNT", "GAY", "FAG" };
-
             // Act
-            string orderId = OrderIdGenerator.GenerateOrderId(length);
+            bool foundLeadingZero = false;
+
+            for (int i = 0; i < 1000; i++)
+            {
+                string orderId = OrderIdGenerator.GenerateOrderId();
+                if (orderId.StartsWith("0"))
+                {
+                    foundLeadingZero = true;
+                    break;
+                }
+            }
 
             // Assert
-            foreach (var forbidden in forbiddenSubstrings)
-            {
-                Assert.DoesNotContain(forbidden, orderId);
-            }
+            Assert.True(foundLeadingZero, "At least one generated order ID should start with a 0");
         }
 
         [Fact]
         public void GenerateOrderId_GeneratesUniqueValues()
         {
             // Arrange
-            int length = 8;
             int iterations = 1000;
             var generatedOrderIds = new HashSet<string>();
 
             // Act & Assert
             for (int i = 0; i < iterations; i++)
             {
-                string orderId = OrderIdGenerator.GenerateOrderId(length);
+                string orderId = OrderIdGenerator.GenerateOrderId();
                 Assert.DoesNotContain(orderId, generatedOrderIds);
                 generatedOrderIds.Add(orderId);
             }

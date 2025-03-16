@@ -14,18 +14,18 @@ using NowPayments.API.Models;
 
 namespace EcomPlat.Web.Areas.Public.Controllers
 {
-    public class PaymentsController : Controller
+    public class CallbacksController : Controller
     {
-        private readonly ILogger<PaymentsController> logger;
+        private readonly ILogger<CallbacksController> logger;
         private readonly INowPaymentsService paymentService;
         private readonly IOrderRepository orderRepository;
         private readonly ApplicationDbContext context;
 
-        public PaymentsController(
+        public CallbacksController(
             ApplicationDbContext context,
             INowPaymentsService paymentService,
             IOrderRepository orderRepository,
-            ILogger<PaymentsController> logger)
+            ILogger<CallbacksController> logger)
         {
             this.context = context;
             this.paymentService = paymentService;
@@ -35,36 +35,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
 
         [HttpPost]
         [AllowAnonymous]
-        [Route("payments/confirmnowpayments")]
-        public async Task<IActionResult> ConfirmedNowPaymentsAsync()
-        {
-            string sessionId = this.HttpContext.Session.Id;
-
-            // Load the shopping cart.
-            var cart = await this.context.ShoppingCarts
-                .Include(c => c.Items)
-                    .ThenInclude(i => i.Product)
-                .FirstOrDefaultAsync(c => c.SessionId == sessionId);
-
-            if (cart == null || !cart.Items.Any())
-            {
-                return this.RedirectToAction("Index", "Products", new { area = "Public" });
-            }
-
-            var paymentRequest = new PaymentRequest()
-            {
-                // todo
-            };
-
-
-            var invoiceFromProcessor = await this.paymentService.CreateInvoice(paymentRequest);
-
-            return this.Redirect(invoiceFromProcessor.InvoiceUrl);
-        }
-
-        [HttpPost]
-        [AllowAnonymous]
-        [Route("payments/nowpaymentscallback")]
+        [Route("callbacks/nowpaymentscallback")]
         public async Task<IActionResult> NowPaymentsCallBackAsync()
         {
             using var reader = new StreamReader(this.Request.Body, Encoding.UTF8);

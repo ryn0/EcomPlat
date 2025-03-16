@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using EasyPost;
 using EasyPost.Models.API;
+using EcomPlat.Shipping.Constants;
 using EcomPlat.Shipping.Helpers;
 using EcomPlat.Shipping.Models;
 using EcomPlat.Shipping.Services.Interfaces;
@@ -113,8 +114,8 @@ namespace EcomPlat.Shipping.Services.Implementations
 
             // Retrieve the USPS Priority rate.
             Rate uspsPriorityRate = shipment.Rates.FirstOrDefault(r =>
-                r.Carrier.Equals("USPS", StringComparison.OrdinalIgnoreCase) &&
-                r.Service.Equals("Priority", StringComparison.OrdinalIgnoreCase));
+                r.Carrier.Equals(StringConstants.DefaultCarrier, StringComparison.OrdinalIgnoreCase) &&
+                r.Service.Equals(StringConstants.DefaultService, StringComparison.OrdinalIgnoreCase));
 
             if (uspsPriorityRate == null)
             {

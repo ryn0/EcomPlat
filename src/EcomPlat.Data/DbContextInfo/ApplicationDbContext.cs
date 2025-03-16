@@ -1,6 +1,7 @@
 ﻿using EcomPlat.Data.Models;
 using EcomPlat.Data.Models.BaseModels;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace EcomPlat.Data.DbContextInfo
 {
@@ -44,6 +45,9 @@ namespace EcomPlat.Data.DbContextInfo
             return base.SaveChangesAsync(cancellationToken);
         }
 
+        private const string SizeOfPriceDecimal = "decimal(18,2)";
+        private const string SizeOfWeightDecimal = "decimal(28,8)";
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -55,59 +59,73 @@ namespace EcomPlat.Data.DbContextInfo
                 .HasForeignKey(p => p.SubcategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            
             // Order decimal properties
             modelBuilder.Entity<Order>(entity =>
             {
                 entity.Property(e => e.OrderTotal)
-                      .HasColumnType("decimal(18,2)");
+                      .HasColumnType(SizeOfPriceDecimal);
 
                 entity.Property(e => e.SalePrice)
-                      .HasColumnType("decimal(18,2)");
+                      .HasColumnType(SizeOfPriceDecimal);
 
                 entity.Property(e => e.ShippingAmount)
-                      .HasColumnType("decimal(18,2)");
+                      .HasColumnType(SizeOfPriceDecimal);
 
                 entity.Property(e => e.ShippingWeightOunces)
-                      .HasColumnType("decimal(18,2)");
+                      .HasColumnType(SizeOfPriceDecimal);
+
+                entity.Property(e => e.SalePrice)
+                .HasColumnType(SizeOfPriceDecimal);
+
+                entity.Property(e => e.OutcomeAmount)
+                .HasColumnType(SizeOfPriceDecimal);
+
+                entity.Property(e => e.PaidAmount)
+                .HasColumnType(SizeOfPriceDecimal);
+ 
+
             });
 
             // OrderItem decimal properties
             modelBuilder.Entity<OrderItem>(entity =>
             {
                 entity.Property(e => e.UnitPrice)
-                      .HasColumnType("decimal(18,2)");
+                      .HasColumnType(SizeOfPriceDecimal);
             });
+
 
             // Product decimal properties
             modelBuilder.Entity<Product>(entity =>
             {
+
                 entity.Property(e => e.Price)
-                      .HasColumnType("decimal(18,2)");
+                      .HasColumnType(SizeOfPriceDecimal);
 
                 entity.Property(e => e.SalePrice)
-                      .HasColumnType("decimal(18,2)");
+                      .HasColumnType(SizeOfPriceDecimal);
 
                 entity.Property(e => e.ProductWeightOunces)
-                      .HasColumnType("decimal(28,8)");
+                      .HasColumnType(SizeOfWeightDecimal);
 
                 entity.Property(e => e.ShippingWeightOunces)
-                      .HasColumnType("decimal(28,8)");
+                      .HasColumnType(SizeOfWeightDecimal);
 
                 entity.Property(e => e.HeightInches)
-                      .HasColumnType("decimal(28,8)");
+                      .HasColumnType(SizeOfWeightDecimal);
 
                 entity.Property(e => e.WidthInches)
-                      .HasColumnType("decimal(28,8)");
+                      .HasColumnType(SizeOfWeightDecimal);
 
                 entity.Property(e => e.LengthInches)
-                      .HasColumnType("decimal(28,8)");
+                      .HasColumnType(SizeOfWeightDecimal);
             });
 
             // ProductInventory decimal properties
             modelBuilder.Entity<ProductInventory>(entity =>
             {
                 entity.Property(e => e.PurchaseCost)
-                      .HasColumnType("decimal(18,2)");
+                      .HasColumnType(SizeOfPriceDecimal);
             });
 
             modelBuilder.Entity<ProductImage>()

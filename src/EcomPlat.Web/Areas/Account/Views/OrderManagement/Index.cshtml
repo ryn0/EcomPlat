@@ -1,0 +1,37 @@
+﻿@model IEnumerable<EcomPlat.Data.Models.Order>
+
+@{
+    ViewData["Title"] = "Orders";
+}
+
+<h2>Orders</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Order ID</th>
+            <th>Customer Email</th>
+            <th>Date</th>
+            <th>Total</th>
+            <th>Payment Status</th>
+            <th>Shipping Status</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var order in Model)
+        {
+            <tr>
+                <td>@order.CustomerOrderId</td>
+                <td>@order.CustomerEmail</td>
+                <td>@order.OrderDate.ToShortDateString()</td>
+                <td>@order.OrderTotal.ToString("C")</td>
+                <td>@order.PaymentStatus</td>
+                <td>@order.ShippingStatus</td>
+                <td>
+                    <a asp-action="Details" asp-route-orderId="@order.OrderId" class="btn btn-info btn-sm">View</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

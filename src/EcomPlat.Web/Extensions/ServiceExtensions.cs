@@ -11,6 +11,11 @@ using EcomPlat.Shipping.Services.Implementations;
 using EcomPlat.Shipping.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
+using NowPayments.API.Implementations;
+using NowPayments.API.Interfaces;
+using NowPayments.API.Models;
 // using any additional namespaces
 
 namespace EcomPlat.Web.Extensions
@@ -38,6 +43,18 @@ namespace EcomPlat.Web.Extensions
 
             // Register custom repositories (ensure you have an extension method AddRepositories() defined)
             services.AddRepositories();
+
+            // NOWPayments configuration and service registration
+            services.AddScoped<INowPaymentsService>(provider =>
+            {
+                using var scope = provider.CreateScope();
+                var cacheService = scope.ServiceProvider.GetRequiredService<ICacheService>();
+                var nowPaymentsConfigJson = cacheService.GetSnippet(SiteConfigSetting.NowPaymentsConfigJson);
+                var nowPaymentsConfig = JsonConvert.DeserializeObject<NowPaymentConfigs>(nowPaymentsConfigJson)
+                                    ?? throw new Exception("NOWPayments config not found");
+
+                return new NowPaymentsService(nowPaymentsConfig);
+            });
 
             // Register file storage repository (singleton)  
             services.AddSingleton<ISiteFilesRepository, SiteFilesRepository>();

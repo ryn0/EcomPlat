@@ -9,5 +9,7 @@
         public const string SelectText = "-- Select --";
         public const string DeserializationObjectIsNull = "DeserializationObjectIsNull";
         public const string InvoiceNotFound = "InvoiceNotFound";
+        public const string SiteName = "Das Jars";
+        public const string SiteDescription = "Buy food in glass jars.";
     }
 }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@this.ViewData["Title"] - Das Jars</title>
+    <title>@this.ViewData["Title"]</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -106,6 +106,9 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" href="~/products">Products</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" href="~/faq">FAQ</a>
+                        </li>
                     </ul>
                     @if (this.User.Identity.IsAuthenticated)
                     {
@@ -138,7 +141,7 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; @DateTime.UtcNow.Year - Das Jars - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            &copy; @DateTime.UtcNow.Year - @EcomPlat.Web.Constants.StringConstants.SiteName - <a href="~/terms">Terms</a> | <a href="~/contact">Contact</a>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

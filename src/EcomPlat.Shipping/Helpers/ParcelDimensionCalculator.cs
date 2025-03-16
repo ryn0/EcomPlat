@@ -1,13 +1,10 @@
-﻿using System;
-using System.Linq;
-using EcomPlat.Shipping.Models;
+﻿using EcomPlat.Shipping.Models;
 
 namespace EcomPlat.Shipping.Helpers
 {
- 
-        public static class ParcelDimensionCalculator
-        {
- 
+    public static class ParcelDimensionCalculator
+    {
+
         /// <summary>
         /// Calculates candidate box dimensions for a shopping cart.
         /// It tries every possible grid arrangement and returns the candidate with the smallest difference between width and depth,
@@ -66,5 +63,4 @@ namespace EcomPlat.Shipping.Helpers
             return bestCandidate;
         }
     }
-    }
- 
+}

@@ -386,36 +386,6 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             };
             return order;
         }
-
-
-        [HttpPost]
-        [AllowAnonymous]
-        [Route("checkout/confirmnowpayments")]
-        public async Task<IActionResult> ConfirmedNowPaymentsAsync()
-        {
-            string sessionId = this.HttpContext.Session.Id;
-
-            // Load the shopping cart.
-            var cart = await this.context.ShoppingCarts
-                .Include(c => c.Items)
-                    .ThenInclude(i => i.Product)
-                .FirstOrDefaultAsync(c => c.SessionId == sessionId);
-
-            if (cart == null || !cart.Items.Any())
-            {
-                return this.RedirectToAction("Index", "Products", new { area = "Public" });
-            }
-
-            var paymentRequest = new PaymentRequest()
-            {
-                // todo
-            };
-
-
-            var invoiceFromProcessor = await this.paymentService.CreateInvoice(paymentRequest);
-
-            return this.Redirect(invoiceFromProcessor.InvoiceUrl);
-        }
  
         private async Task<ShippingCostResult> GetShippingCostAsync(
             CheckoutViewModel viewModel,
@@ -437,7 +407,6 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                     Quantity = item.Quantity
                 });
             }
-
 
             return await this.shippingService.CalculateShippingCostAsync(shippingCart, fromAddress, toAddress);
         }

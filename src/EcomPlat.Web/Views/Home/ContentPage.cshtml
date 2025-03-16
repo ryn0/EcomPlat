@@ -1,0 +1,12 @@
+﻿@model string
+
+@{
+    ViewData["Title"] = ViewData["Title"] ?? "Content Page";
+}
+
+<div class="container mt-4">
+    <h1>@ViewData["Title"]</h1>
+    <div class="mt-3">
+        @Html.Raw(Model)
+    </div>
+</div>

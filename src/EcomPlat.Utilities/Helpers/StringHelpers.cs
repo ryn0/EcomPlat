@@ -6,15 +6,15 @@ namespace EcomPlat.Utilities.Helpers
 {
     public class StringHelpers
     {
-        public static string UrlKey(string p)
+        public static string UrlKey(string input)
         {
-            if (string.IsNullOrWhiteSpace(p))
+            if (string.IsNullOrWhiteSpace(input))
             {
                 return string.Empty;
             }
 
             // Step 1: Normalize the string to decompose accented characters.
-            string normalized = p.Normalize(NormalizationForm.FormD);
+            string normalized = input.Normalize(NormalizationForm.FormD);
 
             // Step 2: Remove non-ASCII characters (like accents).
             var stringBuilder = new StringBuilder();
@@ -33,6 +33,7 @@ namespace EcomPlat.Utilities.Helpers
 
             // Step 4: Replace special characters with meaningful equivalents.
             cleaned = cleaned.Replace("&", "and");
+            cleaned = cleaned.Replace("'", string.Empty);
 
             // Step 5: Use regex to replace non-alphanumeric characters with a single space.
             var replaceRegex = Regex.Replace(cleaned, @"[^a-zA-Z0-9\s-]+", " ");

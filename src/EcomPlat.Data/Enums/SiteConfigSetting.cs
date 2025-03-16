@@ -10,5 +10,8 @@
         EasyPostApiKey = 5,
         NowPaymentsConfigJson = 6,
         SendGridConfigJson = 7,
+        FAQContentHtml = 8,
+        TermsContentHtml = 9,
+        ContactContentHtml = 10,
     }
 }

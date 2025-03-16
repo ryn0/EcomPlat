@@ -1,8 +1,22 @@
-﻿@{
-    this.ViewData["Title"] = "Home Page";
+﻿@model EcomPlat.Web.Models.HomePageViewModel
+
+@{
+    ViewData["Title"] = EcomPlat.Web.Constants.StringConstants.SiteName;
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-4">Welcome to @EcomPlat.Web.Constants.StringConstants.SiteName</h1>
+    <p>@EcomPlat.Web.Constants.StringConstants.SiteDescription</p>
+</div>
+
+<div class="container mt-4">
+    <!-- Recent Products Section -->
+    <h2 class="mb-3">Newest Arrivals</h2>
+    @await Html.PartialAsync("_ProductListPartial", Model.RecentProducts)
+
+    <hr class="my-5" />
+
+    <!-- Random Products Section -->
+    <h2 class="mb-3">You Might Also Like</h2>
+    @await Html.PartialAsync("_ProductListPartial", Model.RandomProducts)
 </div>

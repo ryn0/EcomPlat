@@ -20,11 +20,12 @@ namespace EcomPlat.Web.Areas.Public.Controllers
 
         [HttpGet("")]
         public async Task<IActionResult> Index(
-            string categoryKey,
-            string subCategoryKey,
-            int page = 1,
-            int pageSize = DefaultPageSize,
-            string sortOrder = "")
+       string categoryKey,
+       string subCategoryKey,
+       string searchTerm = "",
+       int page = 1,
+       int pageSize = DefaultPageSize,
+       string sortOrder = "")
         {
             if (page < 1)
             {
@@ -42,13 +43,13 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 .Distinct()
                 .ToListAsync();
 
-            // Load all categories with their subcategories.
+            // Load all categories with their subcategories (This is NOT affected by search!)
             var allCategories = await this.context.Categories
                 .Include(c => c.Subcategories)
                 .OrderBy(c => c.Name)
                 .ToListAsync();
 
-            // Filter categories to only include those with at least one available subcategory.
+            // Ensure that all categories remain in ViewBag.
             var availableCategories = allCategories
                 .Select(c => new
                 {
@@ -71,18 +72,25 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 .Include(p => p.Company)
                 .Where(p => p.IsAvailable);
 
-            // Filter by categoryKey (if provided).
+            // Apply category filtering (if provided).
             if (!string.IsNullOrWhiteSpace(categoryKey))
             {
                 query = query.Where(p => p.Subcategory.Category.CategoryKey == categoryKey);
-                // Filter by subCategoryKey (if provided).
+
                 if (!string.IsNullOrWhiteSpace(subCategoryKey))
                 {
                     query = query.Where(p => p.Subcategory.SubcategoryKey == subCategoryKey);
                 }
             }
 
-            // Default sort by name unless price is specified.
+            // Apply search filter (if search term is provided)
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                string lowerSearchTerm = searchTerm.ToLower();
+                query = query.Where(p => p.Name.ToLower().Contains(lowerSearchTerm) || p.Description.ToLower().Contains(lowerSearchTerm));
+            }
+
+            // Apply sorting
             if (string.IsNullOrWhiteSpace(sortOrder) || sortOrder == "name")
             {
                 query = query.OrderBy(p => p.Name);
@@ -100,6 +108,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 query = query.OrderBy(p => p.Name);
             }
 
+            // Pagination
             int totalProducts = await query.CountAsync();
             var products = await query
                 .Skip((page - 1) * pageSize)
@@ -116,16 +125,20 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 }
             }
 
+            // Store data for the view.
             this.ViewData["SortOrder"] = sortOrder;
             this.ViewData["CurrentPage"] = page;
             this.ViewData["PageSize"] = pageSize;
             this.ViewData["TotalProducts"] = totalProducts;
             this.ViewData["SelectedCategoryKey"] = categoryKey;
             this.ViewData["SelectedSubCategoryKey"] = subCategoryKey;
-            this.ViewBag.AllCategories = availableCategories;
+            this.ViewData["SearchTerm"] = searchTerm;
+
+            this.ViewBag.AllCategories = availableCategories; // Keep categories visible!
 
             return this.View("Index", products);
         }
+
 
         [HttpGet("/product/{productKey}")]
         public async Task<IActionResult> DetailsByKey(string productKey)

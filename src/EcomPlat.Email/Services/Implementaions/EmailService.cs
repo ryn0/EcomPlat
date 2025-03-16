@@ -10,12 +10,12 @@ namespace EcomPlat.Email.Services.Implementaions
         private readonly SendGridClient client;
         private readonly string senderEmail;
         private readonly string senderName;
-        private readonly EmailSettings emailSettings;
         private readonly bool useUnsubscribeHeader = false;
         private readonly string unsubscribeEmail = string.Empty;
         private readonly string unsubscribeUrlFormat = string.Empty;
+        private readonly SendGridConfig config;
 
-        public EmailService(SendGridConfig config, EmailSettings emailSettings)
+        public EmailService(SendGridConfig config)
         {
             if (string.IsNullOrEmpty(config.ApiKey))
             {
@@ -25,14 +25,13 @@ namespace EcomPlat.Email.Services.Implementaions
             this.client = new SendGridClient(config.ApiKey);
             this.senderEmail = config.SenderEmail;
             this.senderName = config.SenderName;
-            this.emailSettings = emailSettings;
 
-            if (this.emailSettings != null &&
-                !string.IsNullOrWhiteSpace(this.emailSettings.UnsubscribeEmail) &&
-                !string.IsNullOrWhiteSpace(this.emailSettings.UnsubscribeUrlFormat))
+            if (this.config != null &&
+                !string.IsNullOrWhiteSpace(this.config.UnsubscribeEmail) &&
+                !string.IsNullOrWhiteSpace(this.config.UnsubscribeUrlFormat))
             {
-                this.unsubscribeEmail = this.emailSettings.UnsubscribeEmail.Trim();
-                this.unsubscribeUrlFormat = this.emailSettings.UnsubscribeUrlFormat.Trim();
+                this.unsubscribeEmail = this.config.UnsubscribeEmail.Trim();
+                this.unsubscribeUrlFormat = this.config.UnsubscribeUrlFormat.Trim();
                 this.useUnsubscribeHeader = true;
             }
         }

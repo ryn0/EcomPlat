@@ -5,6 +5,9 @@ using EcomPlat.Data.Constants;
 using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Enums;
 using EcomPlat.Data.Models;
+using EcomPlat.Email.Models;
+using EcomPlat.Email.Services.Implementaions;
+using EcomPlat.Email.Services.Interfaces;
 using EcomPlat.FileStorage.Repositories.Implementations;
 using EcomPlat.FileStorage.Repositories.Interfaces;
 using EcomPlat.Shipping.Services.Implementations;
@@ -84,6 +87,16 @@ namespace EcomPlat.Web.Extensions
 
                     return new ShippingService(easyPostApiKey);
                 }).GetAwaiter().GetResult();
+            });
+
+            services.AddScoped<IEmailService, EmailService>(provider =>
+            {
+                using var scope = provider.CreateScope();
+                var cacheService = scope.ServiceProvider.GetRequiredService<ICacheService>();
+
+                var emailConfig = JsonConvert.DeserializeObject<SendGridConfig>(cacheService.GetSnippet(SiteConfigSetting.SendGridConfigJson));
+
+                return new EmailService(emailConfig);
             });
 
             // Configure route options for lowercase URLs

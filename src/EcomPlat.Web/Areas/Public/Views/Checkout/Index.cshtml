@@ -1,9 +1,33 @@
 ﻿@using EcomPlat.Data.Enums
 @using EcomPlat.Shipping.Constants
 @model EcomPlat.Web.Models.CheckoutViewModel
+@inject NowPayments.API.Interfaces.INowPaymentsService nowPaymentsService
+@using Microsoft.Extensions.Caching.Memory
+@inject IMemoryCache memoryCache
 
 @{
     ViewData["Title"] = "Checkout";
+
+    string selectedCurrency = Context.Request.Cookies["currency"] ?? EcomPlat.Data.Enums.Currency.USD.ToString();
+    bool showConverted = !string.IsNullOrWhiteSpace(selectedCurrency) && selectedCurrency.ToLower() == EcomPlat.Data.Enums.Currency.XMR.ToString().ToLower();
+    string cacheKey = EcomPlat.Web.Constants.StringConstants.CacheKeyConversion;
+    decimal conversionRate = 0;
+
+    if (showConverted)
+    {
+        if (!memoryCache.TryGetValue(cacheKey, out conversionRate))
+        {
+            var estimateTask = nowPaymentsService.GetEstimatedConversionAsync(1m, EcomPlat.Data.Enums.Currency.USD.ToString(), EcomPlat.Data.Enums.Currency.XMR.ToString());
+            estimateTask.Wait();
+            var estimate = estimateTask.Result;
+            conversionRate = estimate.EstimatedAmount;
+
+            var cacheEntryOptions = new MemoryCacheEntryOptions()
+                .SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+
+            memoryCache.Set(cacheKey, conversionRate, cacheEntryOptions);
+        }
+    }
 }
 
 <h2>@ViewData["Title"]</h2>
@@ -54,27 +78,44 @@ else
             {
                 <tr>
                     <td>@item.Product.Name</td>
-                    <td>@item.Product.Price.ToString("C")</td>
+                    <td>
+                        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(item.Product.Price, conversionRate, selectedCurrency)
+                    </td>
                     <td>@item.Quantity</td>
-                    <td>@((item.Product.Price * item.Quantity).ToString("C"))</td>
+                    <td>
+                        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(item.Product.Price * item.Quantity, conversionRate, selectedCurrency)
+                    </td>
                 </tr>
             }
         </tbody>
     </table>
 
-    <p><strong>Cart Total:</strong> @Model.OrderItemsTotal.ToString("C") <i>(without shipping)</i></p>
+    <p>
+        <strong>Cart Total:</strong>
+        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(Model.OrderItemsTotal, conversionRate, selectedCurrency)
+        <i>(without shipping)</i>
+    </p>
+
     <p><strong>Product Weight:</strong> @Model.TotalProductWeight.ToString("N2") oz</p>
     <p><strong>Shipping Weight:</strong> @Model.TotalShippingWeight.ToString("N2") oz <i>(without packaging)</i></p>
     <p><strong>Shipping Options:</strong> <i>@StringConstants.DefaultCarrier @StringConstants.DefaultService</i></p>
-    <p><strong>Shipping Charge:</strong> @Model.ShippingAmount.ToString("C")</p>
-    <p><strong>Grand Total:</strong> @((Model.GrandTotal).ToString("C")) @Currency.USD.ToString()</p>
+
+    <p>
+        <strong>Shipping Charge:</strong>
+        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(Model.ShippingAmount, conversionRate, selectedCurrency)
+    </p>
+
+    <p>
+        <strong>Grand Total:</strong>
+        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(Model.GrandTotal, conversionRate, selectedCurrency)     
+    </p>
+
     <h5>Payment Method</h5>
     <p>Monero (NowPayments checkout) <i>Make sure your wallet is synchronized!</i></p>
 
     <form method="post" asp-action="Checkout" class="mt-3">
         @Html.AntiForgeryToken()
 
-        <!-- Email Input -->
         <div class="form-group">
             <label for="email">Email Address</label>
             <input type="email" id="email" name="Email" class="form-control" required />

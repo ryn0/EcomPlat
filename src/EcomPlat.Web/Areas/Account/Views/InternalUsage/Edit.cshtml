@@ -1,0 +1,38 @@
+﻿@model EcomPlat.Data.Models.InternalUsage
+@{
+    ViewData["Title"] = "Edit Internal Usage";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form asp-action="Edit">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="InternalUsageId" />
+
+    <div class="mb-3">
+        <label asp-for="ProductId" class="form-label"></label>
+        <select asp-for="ProductId" asp-items="ViewBag.Products" class="form-select"></select>
+        <span asp-validation-for="ProductId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="QuantityUsed" class="form-label"></label>
+        <input asp-for="QuantityUsed" class="form-control" />
+        <span asp-validation-for="QuantityUsed" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="UsedBy" class="form-label"></label>
+        <input asp-for="UsedBy" class="form-control" />
+        <span asp-validation-for="UsedBy" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Notes" class="form-label"></label>
+        <textarea asp-for="Notes" class="form-control"></textarea>
+        <span asp-validation-for="Notes" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Update</button>
+    <a asp-action="Index" class="btn btn-secondary">Back</a>
+</form>

@@ -18,6 +18,7 @@ namespace EcomPlat.Data.DbContextInfo
         public DbSet<Category> Categories { get; set;  }
         public DbSet<Company> Companies { get; set; }
         public DbSet<ConfigSetting> ConfigSettings { get; set;  }
+        public DbSet<InternalUsage> InternalUsages { get; set; }
         public DbSet<OrderAddress> OrderAddresses { get; set;  }
         public DbSet<OrderItem> OrderItems { get; set;  }
         public DbSet<Order> Orders { get; set;  }

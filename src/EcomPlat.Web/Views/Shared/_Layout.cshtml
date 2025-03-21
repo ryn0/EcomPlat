@@ -90,6 +90,7 @@
         }
 
     </style>
+
 </head>
 <body>
     <header>
@@ -102,7 +103,6 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                     
                         <li class="nav-item">
                             <a class="nav-link text-dark" href="~/products">Products</a>
                         </li>
@@ -122,7 +122,34 @@
                     }
                     <!-- Shopping Cart Link -->
                     <ul class="navbar-nav">
-                        <li class="nav-item">
+                        <li>
+                            @{
+                                var selectedCurrency = Context.Request.Cookies["currency"] ?? EcomPlat.Data.Enums.Currency.USD.ToString();
+                            }
+
+                            <select style="margin-top:5px;" id="currencySelect" class="form-select form-select-sm w-auto" onchange="setCurrencyPreference(this.value)">
+                                <option selected value="@EcomPlat.Data.Enums.Currency.USD.ToString()">@EcomPlat.Data.Enums.Currency.USD.ToString()</option>
+                                <option value="@EcomPlat.Data.Enums.Currency.XMR.ToString()">@EcomPlat.Data.Enums.Currency.XMR.ToString()</option>
+                            </select>
+
+                            <script>
+                                function setCurrencyPreference(currency) {
+                                    document.cookie = "currency=" + currency + "; path=/; max-age=86400";
+                                    location.reload(); // Refresh the page
+                                }
+
+                                window.addEventListener("DOMContentLoaded", function () {
+                                    const match = document.cookie.match(/(?:^|;\s*)currency=([^;]+)/);
+                                    const currency = match ? match[1] : null;
+
+                                    const select = document.querySelector('#currencySelect');
+                                    if (select && currency) {
+                                        select.value = currency;
+                                    }
+                                });
+                            </script>
+                        </li>
+                        <li>
                             <a asp-area="Public" asp-controller="ShoppingCart" asp-action="Index" class="nav-link text-dark">
                                 Cart @await Component.InvokeAsync("CartItemCount")
                             </a>
@@ -148,5 +175,6 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await this.RenderSectionAsync("Scripts", required: false)
+ 
 </body>
 </html>

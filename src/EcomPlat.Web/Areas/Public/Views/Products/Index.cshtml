@@ -85,10 +85,44 @@
         </ul>
     </div>
 
-    <!-- Right Column: Product Listings -->
+ 
     <!-- Right Column: Product Listings -->
     <div class="col-md-9">
         <h4>Results</h4>
+        
+        <!-- Sort row -->
+        @{
+            var sortOptions = new List<SelectListItem>
+        {
+        new SelectListItem { Value = "", Text = "Default", Selected = string.IsNullOrEmpty(sortOrder) },
+        new SelectListItem { Value = "priceAsc", Text = "Price: Low to High", Selected = sortOrder == "priceAsc" },
+        new SelectListItem { Value = "priceDesc", Text = "Price: High to Low", Selected = sortOrder == "priceDesc" }
+        };
+        }
+        <form method="get"
+              asp-area="Public"
+              asp-controller="Products"
+              asp-action="Index"
+              class="d-inline-flex align-items-center mb-3">
+            @if (!string.IsNullOrEmpty(selectedCategoryKey))
+            {
+                <input type="hidden" name="categoryKey" value="@selectedCategoryKey" />
+            }
+            @if (!string.IsNullOrEmpty(selectedSubCategoryKey))
+            {
+                <input type="hidden" name="subCategoryKey" value="@selectedSubCategoryKey" />
+            }
+            <label for="sortOrder" class="me-2 mb-0">Sort by:</label>
+            <select id="sortOrder"
+                    name="sortOrder"
+                    class="form-select me-2"
+                    style="width: auto; min-width: 130px;"
+                    asp-items="sortOptions">
+            </select>
+            <input type="hidden" name="page" value="@currentPage" />
+            <input type="hidden" name="pageSize" value="@pageSize" />
+            <button type="submit" class="btn btn-primary">Sort</button>
+        </form>
         <span>Total: @ViewData["TotalProducts"]</span>
 
         @await Html.PartialAsync("_ProductListPartial", Model)

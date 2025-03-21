@@ -118,23 +118,15 @@ namespace EcomPlat.Web.Areas.Public.Controllers
 
             await this.orderRepository.UpdateAsync(order);
 
-            //await this.CreateNewSponsoredListing(invoice);
+            await this.UpdateInventory(order);
 
             return this.Ok();
         }
 
-        //private PaymentRequest GetInvoiceRequest(Order order)
-        //{
-        //    return new PaymentRequest
-        //    {
-        //        IsFeePaidByUser = true,
-        //        PriceAmount = sponsoredListingOffer.Price,
-        //        PriceCurrency = this.paymentService.PriceCurrency,
-        //        PayCurrency = this.paymentService.PayCurrency,
-        //        OrderId = invoice.InvoiceId.ToString(),
-        //        OrderDescription = sponsoredListingOffer.Description
-        //    };
-        //}
+        private async Task UpdateInventory(Order order)
+        {
+            
+        }
 
         private static Data.Enums.PaymentStatus ConvertToInternalStatus(
           NowPayments.API.Enums.PaymentStatus externalStatus)

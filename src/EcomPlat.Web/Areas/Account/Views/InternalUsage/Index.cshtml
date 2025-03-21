@@ -1,0 +1,49 @@
+﻿@model IEnumerable<EcomPlat.Data.Models.InternalUsage>
+@{
+    ViewData["Title"] = "Internal Usage Log";
+    int currentPage = (int)(ViewData["CurrentPage"] ?? 1);
+    int totalPages = (int)(ViewData["TotalPages"] ?? 1);
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<p><a asp-action="Create" class="btn btn-primary">Record New Usage</a></p>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Quantity Used</th>
+            <th>Used By</th>
+            <th>Usage Date</th>
+            <th>Notes</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Product?.Name</td>
+                <td>@item.QuantityUsed</td>
+                <td>@item.UsedBy</td>
+                <td>@item.UsageDate.ToString("g")</td>
+                <td>@item.Notes</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.InternalUsageId" class="btn btn-sm btn-warning">Edit</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<nav>
+    <ul class="pagination">
+        @for (int i = 1; i <= totalPages; i++)
+        {
+            <li class="page-item @(i == currentPage ? "active" : "")">
+                <a class="page-link" asp-action="Index" asp-route-page="@i">@i</a>
+            </li>
+        }
+    </ul>
+</nav>

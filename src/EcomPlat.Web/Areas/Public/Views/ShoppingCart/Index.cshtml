@@ -1,7 +1,32 @@
 ﻿@model EcomPlat.Data.Models.ShoppingCart
+@using EcomPlat.Data.Enums
+@inject NowPayments.API.Interfaces.INowPaymentsService nowPaymentsService
+@using Microsoft.Extensions.Caching.Memory
+@inject IMemoryCache memoryCache
 
 @{
     ViewData["Title"] = "Your Shopping Cart";
+
+    string selectedCurrency = Context.Request.Cookies["currency"] ?? EcomPlat.Data.Enums.Currency.USD.ToString();
+    bool showConverted = !string.IsNullOrWhiteSpace(selectedCurrency) && selectedCurrency.ToLower() == EcomPlat.Data.Enums.Currency.XMR.ToString().ToLower();
+    string cacheKey = EcomPlat.Web.Constants.StringConstants.CacheKeyConversion;
+    decimal conversionRate = 0;
+
+    if (showConverted)
+    {
+        if (!memoryCache.TryGetValue(cacheKey, out conversionRate))
+        {
+            var estimateTask = nowPaymentsService.GetEstimatedConversionAsync(1m, EcomPlat.Data.Enums.Currency.USD.ToString(), EcomPlat.Data.Enums.Currency.XMR.ToString());
+            estimateTask.Wait();
+            var estimate = estimateTask.Result;
+            conversionRate = estimate.EstimatedAmount;
+
+            var cacheEntryOptions = new MemoryCacheEntryOptions()
+                .SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+
+            memoryCache.Set(cacheKey, conversionRate, cacheEntryOptions);
+        }
+    }
 }
 
 @if (TempData.Peek("Error") != null)
@@ -44,7 +69,9 @@
                         }
                     </td>
                     <td>@item.Product.Name</td>
-                    <td>@item.Product.Price.ToString("C")</td>
+                    <td>
+                        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(item.Product.Price, conversionRate, selectedCurrency)                 
+                    </td>
                     <td>
                         <form method="post" asp-area="Public" asp-controller="ShoppingCart" asp-action="UpdateItem" class="d-inline-flex align-items-center">
                             @Html.AntiForgeryToken()
@@ -54,7 +81,9 @@
                             <button type="submit" name="action" value="increase" class="btn btn-sm btn-secondary ms-1">+</button>
                         </form>
                     </td>
-                    <td>@((item.Product.Price * item.Quantity).ToString("C"))</td>
+                    <td>
+                        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(item.Product.Price * item.Quantity, conversionRate, selectedCurrency)
+                    </td>
                     <td>
                         <form method="post" asp-area="Public" asp-controller="ShoppingCart" asp-action="RemoveItem">
                             @Html.AntiForgeryToken()
@@ -66,6 +95,11 @@
             }
         </tbody>
     </table>
+
+    <p>
+        <strong>Items Total:</strong>
+        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(Model.ItemsTotal, conversionRate, selectedCurrency)      
+    </p>
 
     <div class="mt-3">
         <a asp-area="Public" asp-controller="Checkout" asp-action="Index" class="btn btn-success">

@@ -61,7 +61,7 @@ namespace NowPayments.API.Implementations
 
         public async Task<PaymentResponse> CreatePaymentAsync(PaymentCreationRequest paymentRequest)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, StringConstants.ApiPaymentUrl);
+            var request = new HttpRequestMessage(HttpMethod.Post, string.Format("{0}/payment", StringConstants.ApiUrl));
             var contentJson = JsonConvert.SerializeObject(paymentRequest);
             var content = new StringContent(contentJson, Encoding.UTF8, StringConstants.JsonMediaType);
             request.Content = content;
@@ -122,7 +122,7 @@ namespace NowPayments.API.Implementations
                 throw new ArgumentNullException(nameof(paymentId), "Payment ID cannot be null or empty.");
             }
 
-            var url = $"{StringConstants.ApiPaymentUrl}/{paymentId}";
+            var url = $"{StringConstants.ApiUrl}/payment/{paymentId}";
             var response = await this.client.GetAsync(url);
 
             response.EnsureSuccessStatusCode();
@@ -143,7 +143,7 @@ namespace NowPayments.API.Implementations
             try
             {
                 var response = await this.client.PostAsync(
-                    StringConstants.ApiInvoiceUrl,
+                    string.Format("{0}/invoice", StringConstants.ApiUrl),
                     new StringContent(
                         JsonConvert.SerializeObject(request),
                         Encoding.UTF8,
@@ -192,6 +192,28 @@ namespace NowPayments.API.Implementations
             if (string.IsNullOrWhiteSpace(request.PartiallyPaidUrl))
             {
                 request.PartiallyPaidUrl = this.partiallyPaidUrl;
+            }
+        }
+
+        public async Task<CurrencyEstimateResponse> GetEstimatedConversionAsync(decimal amount, string fromCurrency, string toCurrency)
+        {
+            string url = $"{StringConstants.ApiUrl}/estimate?amount={amount:0.0000}&currency_from={fromCurrency}&currency_to={toCurrency}";
+
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("x-api-key", this.apiKey);
+
+            try
+            {
+                var response = await this.client.SendAsync(request);
+                response.EnsureSuccessStatusCode();
+
+                var content = await response.Content.ReadAsStringAsync();
+                var estimate = JsonConvert.DeserializeObject<CurrencyEstimateResponse>(content);
+                return estimate;
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("Failed to parse estimate response.", ex.InnerException);
             }
         }
 

@@ -1,5 +1,32 @@
 ﻿@model IEnumerable<EcomPlat.Data.Models.Product>
 @using EcomPlat.Utilities.Helpers
+@inject NowPayments.API.Interfaces.INowPaymentsService nowPaymentsService
+@using EcomPlat.Web.Constants
+@using Microsoft.Extensions.Caching.Memory
+@inject IMemoryCache memoryCache
+
+@{
+    string selectedCurrency = Context.Request.Cookies["currency"] ?? EcomPlat.Data.Enums.Currency.USD.ToString();
+    bool showConverted = !string.IsNullOrWhiteSpace(selectedCurrency) && selectedCurrency.ToLower() == EcomPlat.Data.Enums.Currency.XMR.ToString().ToLower();
+    string cacheKey = EcomPlat.Web.Constants.StringConstants.CacheKeyConversion;
+    decimal conversionRate = 0;
+
+    if (showConverted)
+    {
+        if (!memoryCache.TryGetValue(cacheKey, out conversionRate))
+        {
+            var estimateTask = nowPaymentsService.GetEstimatedConversionAsync(1m, EcomPlat.Data.Enums.Currency.USD.ToString(), EcomPlat.Data.Enums.Currency.XMR.ToString());
+            estimateTask.Wait();
+            var estimate = estimateTask.Result;
+            conversionRate = estimate.EstimatedAmount;
+
+            var cacheEntryOptions = new MemoryCacheEntryOptions()
+                .SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+
+            memoryCache.Set(cacheKey, conversionRate, cacheEntryOptions);
+        }
+    }
+}
 
 <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">
     @foreach (var product in Model)
@@ -25,7 +52,18 @@
                     <!-- Price and Weight row: price on left, weight on right -->
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="price-line">
-                            <p class="card-text mb-0">@product.Price.ToString("C")</p>
+                            @if (showConverted && conversionRate > 0)
+                            {
+                                <p class="card-text mb-0">
+                                    @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(product.Price, conversionRate, selectedCurrency)
+                                </p>
+                            }
+                            else
+                            {
+                                <p class="card-text mb-0">
+                                    @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(product.Price, 1, selectedCurrency)
+                                </p>
+                            }
                         </div>
                         <div class="weight-line">
                             <p class="card-text mb-0">@product.ProductWeightOunces.ToString("F2") oz</p>
@@ -35,7 +73,7 @@
                     <!-- Flag row -->
                     <div class="flag-line">
                         <div class="flag-container">
-                            <img src="@(Url.Content("~/images/flags/" + product.CountryOfOrigin.ToLower() + ".png"))"
+                            <img src="@(Url.Content(string.Format("~/images/flags/{0}.png", product.CountryOfOrigin.ToLower())))"
                                  title="@product.CountryOfOrigin" alt="@product.CountryOfOrigin" />
                         </div>
                     </div>

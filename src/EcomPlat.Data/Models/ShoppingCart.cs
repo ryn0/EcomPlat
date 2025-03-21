@@ -14,5 +14,6 @@ namespace EcomPlat.Data.Models
 
         // Navigation property for the cart items.
         public ICollection<ShoppingCartItem> Items { get; set; } = new List<ShoppingCartItem>();
+        public decimal ItemsTotal => this.Items.Sum(item => item.Product.Price * item.Quantity);
     }
 }

@@ -1,13 +1,37 @@
-﻿@model EcomPlat.Data.Models.Product
+﻿@using EcomPlat.Web.Constants
+@using Microsoft.Extensions.Caching.Memory
+@model EcomPlat.Data.Models.Product
+@inject NowPayments.API.Interfaces.INowPaymentsService nowPaymentsService
+@inject Microsoft.Extensions.Caching.Memory.IMemoryCache memoryCache
 
 @{
     ViewData["Title"] = Model.Name;
 
-    // Get the main large image: first try for a large variant flagged as main,
-    // otherwise fallback to any large image.
     var mainLarge = Model.Images.FirstOrDefault(i => i.IsMain && i.Size == EcomPlat.Data.Enums.ImageSize.Large)
                     ?? Model.Images.FirstOrDefault(i => i.Size == EcomPlat.Data.Enums.ImageSize.Large);
+
+    string selectedCurrency = Context.Request.Cookies["currency"] ?? EcomPlat.Data.Enums.Currency.USD.ToString();
+    bool showConverted = !string.IsNullOrWhiteSpace(selectedCurrency) && selectedCurrency.ToLower() == EcomPlat.Data.Enums.Currency.XMR.ToString().ToLower();
+    string cacheKey = EcomPlat.Web.Constants.StringConstants.CacheKeyConversion;
+    decimal conversionRate = 0;
+
+    if (showConverted)
+    {
+        if (!memoryCache.TryGetValue(cacheKey, out conversionRate))
+        {
+            var estimateTask = nowPaymentsService.GetEstimatedConversionAsync(1m, EcomPlat.Data.Enums.Currency.USD.ToString(), EcomPlat.Data.Enums.Currency.XMR.ToString());
+            estimateTask.Wait();
+            var estimate = estimateTask.Result;
+            conversionRate = estimate.EstimatedAmount;
+
+            var cacheEntryOptions = new Microsoft.Extensions.Caching.Memory.MemoryCacheEntryOptions()
+                .SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+
+            memoryCache.Set(cacheKey, conversionRate, cacheEntryOptions);
+        }
+    }
 }
+
 <h2>@Model.Name</h2>
 
 <div class="row">
@@ -26,11 +50,15 @@
     <div class="col-md-6">
         <dl class="row">
             <dt class="col-sm-4">Price</dt>
-            <dd class="col-sm-8">@Model.Price.ToString("C")</dd>
+            <dd class="col-sm-8">
+                @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(Model.Price, conversionRate, selectedCurrency)
+            </dd>
             @if (Model.SalePrice.HasValue)
             {
                 <dt class="col-sm-4">Sale Price</dt>
-                <dd class="col-sm-8">@Model.SalePrice.Value.ToString("C")</dd>
+                <dd class="col-sm-8">
+                    @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(Model.SalePrice.Value, conversionRate, selectedCurrency)
+                </dd>
             }
             <dt class="col-sm-4">Category</dt>
             <dd class="col-sm-8">
@@ -62,7 +90,6 @@
             <dd class="col-sm-8">@Model.Company?.Name</dd>
             <dt class="col-sm-4">Country of Origin</dt>
             <dd class="col-sm-8">
-            
                 <div class="flag-line">
                     <div class="flag-container">
                         <img src="@(Url.Content("~/images/flags/" + Model.CountryOfOrigin.ToLower() + ".png"))"
@@ -71,11 +98,9 @@
                     <span>@EcomPlat.Utilities.Helpers.CountryHelper.GetCountryName(Model.CountryOfOrigin)</span>
                 </div>
             </dd>
-         
             <dt class="col-sm-4">In Stock</dt>
             <dd class="col-sm-8">@(Model.IsAvailable ? "Yes" : "No")</dd>
 
-            <!-- New fields for shipping & dimensions -->
             <dt class="col-sm-4">Product Weight (oz)</dt>
             <dd class="col-sm-8">@Model.ProductWeightOunces.ToString("F2")</dd>
 
@@ -84,15 +109,14 @@
 
             <dt class="col-sm-4">Dimensions (L x W x H in)</dt>
             <dd class="col-sm-8">
-                @Model.LengthInches.ToString("F2") x @Model.WidthInches.ToString("F2") x @Model.HeightInches.ToString("F2")
+                    @Model.LengthInches.ToString("F2") x @Model.WidthInches.ToString("F2") x @Model.HeightInches.ToString("F2")
             </dd>
 
-            @if (!string.IsNullOrWhiteSpace(Model.Upc))
-            {
+                @if (!string.IsNullOrWhiteSpace(Model.Upc))
+                {
                 <dt class="col-sm-4">UPC</dt>
                 <dd class="col-sm-8">@Model.Upc</dd>
-            }
-
+                }
         </dl>
 
         <form asp-area="Public" asp-controller="ShoppingCart" asp-action="AddToCart" method="post">
@@ -111,7 +135,6 @@
 <hr />
 
 @{
-    // Get all small image variants.
     var smallImages = Model.Images
                         .Where(i => i.Size == EcomPlat.Data.Enums.ImageSize.Small)
                         .OrderBy(i => i.DisplayOrder)
@@ -124,7 +147,6 @@
     <div class="row">
         @foreach (var small in smallImages)
         {
-            // Find the corresponding large variant.
             var largeVariant = Model.Images.FirstOrDefault(i => i.Size == EcomPlat.Data.Enums.ImageSize.Large &&
             i.ImageGroupGuid == small.ImageGroupGuid);
             <div class="col-auto mb-2">

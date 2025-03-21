@@ -1,32 +1,18 @@
 ﻿@model EcomPlat.Data.Models.ShoppingCart
 @using EcomPlat.Data.Enums
 @inject NowPayments.API.Interfaces.INowPaymentsService nowPaymentsService
+@using EcomPlat.Web.Converters
+@using Microsoft.AspNetCore.Http
 @using Microsoft.Extensions.Caching.Memory
 @inject IMemoryCache memoryCache
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor httpContextAccessor
 
 @{
     ViewData["Title"] = "Your Shopping Cart";
 
-    string selectedCurrency = Context.Request.Cookies["currency"] ?? EcomPlat.Data.Enums.Currency.USD.ToString();
-    bool showConverted = !string.IsNullOrWhiteSpace(selectedCurrency) && selectedCurrency.ToLower() == EcomPlat.Data.Enums.Currency.XMR.ToString().ToLower();
-    string cacheKey = EcomPlat.Web.Constants.StringConstants.CacheKeyConversion;
-    decimal conversionRate = 0;
-
-    if (showConverted)
-    {
-        if (!memoryCache.TryGetValue(cacheKey, out conversionRate))
-        {
-            var estimateTask = nowPaymentsService.GetEstimatedConversionAsync(1m, EcomPlat.Data.Enums.Currency.USD.ToString(), EcomPlat.Data.Enums.Currency.XMR.ToString());
-            estimateTask.Wait();
-            var estimate = estimateTask.Result;
-            conversionRate = estimate.EstimatedAmount;
-
-            var cacheEntryOptions = new MemoryCacheEntryOptions()
-                .SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
-
-            memoryCache.Set(cacheKey, conversionRate, cacheEntryOptions);
-        }
-    }
+    var conversionResult = await CurrencyConversionHelper.GetConversionContextAsync(httpContextAccessor, memoryCache, nowPaymentsService);
+    bool showConverted = conversionResult.showConverted;
+    decimal conversionRate = conversionResult.conversionRate;
 }
 
 @if (TempData.Peek("Error") != null)
@@ -59,18 +45,26 @@
                         @{
                             var smallImage = item.Product.Images.FirstOrDefault(i => i.Size == EcomPlat.Data.Enums.ImageSize.Small);
                         }
-                        @if (smallImage != null)
-                        {
-                            <img src="@smallImage.ImageUrl" alt="@item.Product.Name" style="width:60px; height:60px; object-fit:cover;" />
-                        }
-                        else
-                        {
-                            <span>No image</span>
-                        }
+
+                        <a asp-area="Public"
+                           asp-controller="Products"
+                           asp-action="DetailsByKey"
+                           asp-route-productKey="@item.Product.ProductKey"
+                           class="btn btn-primary btn-sm">
+                            @if (smallImage != null)
+                            {
+                                <img src="@smallImage.ImageUrl" alt="@item.Product.Name" style="width:60px; height:60px; object-fit:cover;" />
+                            }
+                            else
+                            {
+                                <span>No image</span>
+                            }
+                        </a>
+                       
                     </td>
                     <td>@item.Product.Name</td>
                     <td>
-                        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(item.Product.Price, conversionRate, selectedCurrency)                 
+                        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(item.Product.Price, conversionRate, conversionResult.selectedCurrency)
                     </td>
                     <td>
                         <form method="post" asp-area="Public" asp-controller="ShoppingCart" asp-action="UpdateItem" class="d-inline-flex align-items-center">
@@ -82,7 +76,7 @@
                         </form>
                     </td>
                     <td>
-                        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(item.Product.Price * item.Quantity, conversionRate, selectedCurrency)
+                        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(item.Product.Price * item.Quantity, conversionRate, conversionResult.selectedCurrency)
                     </td>
                     <td>
                         <form method="post" asp-area="Public" asp-controller="ShoppingCart" asp-action="RemoveItem">
@@ -98,7 +92,7 @@
 
     <p>
         <strong>Items Total:</strong>
-        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(Model.ItemsTotal, conversionRate, selectedCurrency)      
+        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(Model.ItemsTotal, conversionRate, conversionResult.selectedCurrency)
     </p>
 
     <div class="mt-3">

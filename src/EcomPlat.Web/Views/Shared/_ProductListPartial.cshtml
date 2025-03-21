@@ -2,30 +2,15 @@
 @using EcomPlat.Utilities.Helpers
 @inject NowPayments.API.Interfaces.INowPaymentsService nowPaymentsService
 @using EcomPlat.Web.Constants
+@using EcomPlat.Web.Converters
 @using Microsoft.Extensions.Caching.Memory
 @inject IMemoryCache memoryCache
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor httpContextAccessor
 
 @{
-    string selectedCurrency = Context.Request.Cookies["currency"] ?? EcomPlat.Data.Enums.Currency.USD.ToString();
-    bool showConverted = !string.IsNullOrWhiteSpace(selectedCurrency) && selectedCurrency.ToLower() == EcomPlat.Data.Enums.Currency.XMR.ToString().ToLower();
-    string cacheKey = EcomPlat.Web.Constants.StringConstants.CacheKeyConversion;
-    decimal conversionRate = 0;
-
-    if (showConverted)
-    {
-        if (!memoryCache.TryGetValue(cacheKey, out conversionRate))
-        {
-            var estimateTask = nowPaymentsService.GetEstimatedConversionAsync(1m, EcomPlat.Data.Enums.Currency.USD.ToString(), EcomPlat.Data.Enums.Currency.XMR.ToString());
-            estimateTask.Wait();
-            var estimate = estimateTask.Result;
-            conversionRate = estimate.EstimatedAmount;
-
-            var cacheEntryOptions = new MemoryCacheEntryOptions()
-                .SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
-
-            memoryCache.Set(cacheKey, conversionRate, cacheEntryOptions);
-        }
-    }
+    var conversionResult = await CurrencyConversionHelper.GetConversionContextAsync(httpContextAccessor, memoryCache, nowPaymentsService);
+    bool showConverted = conversionResult.showConverted;
+    decimal conversionRate = conversionResult.conversionRate;
 }
 
 <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">
@@ -55,13 +40,13 @@
                             @if (showConverted && conversionRate > 0)
                             {
                                 <p class="card-text mb-0">
-                                    @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(product.Price, conversionRate, selectedCurrency)
+                                    @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(product.Price, conversionRate, conversionResult.selectedCurrency)
                                 </p>
                             }
                             else
                             {
                                 <p class="card-text mb-0">
-                                    @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(product.Price, 1, selectedCurrency)
+                                    @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(product.Price, 1, conversionResult.selectedCurrency)
                                 </p>
                             }
                         </div>

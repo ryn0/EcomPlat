@@ -1,35 +1,21 @@
 ﻿@using EcomPlat.Web.Constants
+@using EcomPlat.Web.Converters
 @using Microsoft.Extensions.Caching.Memory
 @model EcomPlat.Data.Models.Product
 @inject NowPayments.API.Interfaces.INowPaymentsService nowPaymentsService
 @inject Microsoft.Extensions.Caching.Memory.IMemoryCache memoryCache
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor httpContextAccessor
 
 @{
     ViewData["Title"] = Model.Name;
 
     var mainLarge = Model.Images.FirstOrDefault(i => i.IsMain && i.Size == EcomPlat.Data.Enums.ImageSize.Large)
                     ?? Model.Images.FirstOrDefault(i => i.Size == EcomPlat.Data.Enums.ImageSize.Large);
-
-    string selectedCurrency = Context.Request.Cookies["currency"] ?? EcomPlat.Data.Enums.Currency.USD.ToString();
-    bool showConverted = !string.IsNullOrWhiteSpace(selectedCurrency) && selectedCurrency.ToLower() == EcomPlat.Data.Enums.Currency.XMR.ToString().ToLower();
-    string cacheKey = EcomPlat.Web.Constants.StringConstants.CacheKeyConversion;
-    decimal conversionRate = 0;
-
-    if (showConverted)
-    {
-        if (!memoryCache.TryGetValue(cacheKey, out conversionRate))
-        {
-            var estimateTask = nowPaymentsService.GetEstimatedConversionAsync(1m, EcomPlat.Data.Enums.Currency.USD.ToString(), EcomPlat.Data.Enums.Currency.XMR.ToString());
-            estimateTask.Wait();
-            var estimate = estimateTask.Result;
-            conversionRate = estimate.EstimatedAmount;
-
-            var cacheEntryOptions = new Microsoft.Extensions.Caching.Memory.MemoryCacheEntryOptions()
-                .SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
-
-            memoryCache.Set(cacheKey, conversionRate, cacheEntryOptions);
-        }
-    }
+ 
+    var conversionResult = await CurrencyConversionHelper.GetConversionContextAsync(httpContextAccessor, memoryCache, nowPaymentsService);
+    bool showConverted = conversionResult.showConverted;
+    decimal conversionRate = conversionResult.conversionRate;
+ 
 }
 
 <h2>@Model.Name</h2>
@@ -51,13 +37,13 @@
         <dl class="row">
             <dt class="col-sm-4">Price</dt>
             <dd class="col-sm-8">
-                @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(Model.Price, conversionRate, selectedCurrency)
+                @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(Model.Price, conversionRate, conversionResult.selectedCurrency)
             </dd>
             @if (Model.SalePrice.HasValue)
             {
                 <dt class="col-sm-4">Sale Price</dt>
                 <dd class="col-sm-8">
-                    @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(Model.SalePrice.Value, conversionRate, selectedCurrency)
+                    @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(Model.SalePrice.Value, conversionRate, conversionResult.selectedCurrency)
                 </dd>
             }
             <dt class="col-sm-4">Category</dt>

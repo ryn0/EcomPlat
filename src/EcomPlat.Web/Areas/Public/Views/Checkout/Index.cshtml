@@ -2,32 +2,15 @@
 @using EcomPlat.Shipping.Constants
 @model EcomPlat.Web.Models.CheckoutViewModel
 @inject NowPayments.API.Interfaces.INowPaymentsService nowPaymentsService
+@using EcomPlat.Web.Converters
 @using Microsoft.Extensions.Caching.Memory
 @inject IMemoryCache memoryCache
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor httpContextAccessor
 
 @{
-    ViewData["Title"] = "Checkout";
-
-    string selectedCurrency = Context.Request.Cookies["currency"] ?? EcomPlat.Data.Enums.Currency.USD.ToString();
-    bool showConverted = !string.IsNullOrWhiteSpace(selectedCurrency) && selectedCurrency.ToLower() == EcomPlat.Data.Enums.Currency.XMR.ToString().ToLower();
-    string cacheKey = EcomPlat.Web.Constants.StringConstants.CacheKeyConversion;
-    decimal conversionRate = 0;
-
-    if (showConverted)
-    {
-        if (!memoryCache.TryGetValue(cacheKey, out conversionRate))
-        {
-            var estimateTask = nowPaymentsService.GetEstimatedConversionAsync(1m, EcomPlat.Data.Enums.Currency.USD.ToString(), EcomPlat.Data.Enums.Currency.XMR.ToString());
-            estimateTask.Wait();
-            var estimate = estimateTask.Result;
-            conversionRate = estimate.EstimatedAmount;
-
-            var cacheEntryOptions = new MemoryCacheEntryOptions()
-                .SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
-
-            memoryCache.Set(cacheKey, conversionRate, cacheEntryOptions);
-        }
-    }
+    var conversionResult = await CurrencyConversionHelper.GetConversionContextAsync(httpContextAccessor, memoryCache, nowPaymentsService);
+    bool showConverted = conversionResult.showConverted;
+    decimal conversionRate = conversionResult.conversionRate;
 }
 
 <h2>@ViewData["Title"]</h2>
@@ -79,11 +62,11 @@ else
                 <tr>
                     <td>@item.Product.Name</td>
                     <td>
-                        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(item.Product.Price, conversionRate, selectedCurrency)
+                        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(item.Product.Price, conversionRate, conversionResult.selectedCurrency)
                     </td>
                     <td>@item.Quantity</td>
                     <td>
-                        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(item.Product.Price * item.Quantity, conversionRate, selectedCurrency)
+                        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(item.Product.Price * item.Quantity, conversionRate, conversionResult.selectedCurrency)
                     </td>
                 </tr>
             }
@@ -92,7 +75,7 @@ else
 
     <p>
         <strong>Cart Total:</strong>
-        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(Model.OrderItemsTotal, conversionRate, selectedCurrency)
+        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(Model.OrderItemsTotal, conversionRate, conversionResult.selectedCurrency)
         <i>(without shipping)</i>
     </p>
 
@@ -102,12 +85,12 @@ else
 
     <p>
         <strong>Shipping Charge:</strong>
-        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(Model.ShippingAmount, conversionRate, selectedCurrency)
+        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(Model.ShippingAmount, conversionRate, conversionResult.selectedCurrency)
     </p>
 
     <p>
         <strong>Grand Total:</strong>
-        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(Model.GrandTotal, conversionRate, selectedCurrency)     
+        @EcomPlat.Utilities.Helpers.CurrencyFormatter.Format(Model.GrandTotal, conversionRate, conversionResult.selectedCurrency)
     </p>
 
     <h5>Payment Method</h5>

@@ -100,8 +100,8 @@ else
         @Html.AntiForgeryToken()
 
         <div class="form-group">
-            <label for="email">Email Address</label>
-            <input type="email" id="email" name="Email" class="form-control" required />
+            <label for="email">Email Address (optional)</label> <i>If you do not provide an email, you will only be able to track your order by order ID.</i>
+            <input type="email" id="email" name="Email" class="form-control w-25" />
         </div>
 
         <div class="form-group mt-3">

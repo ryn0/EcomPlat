@@ -18,7 +18,7 @@ namespace EcomPlat.Data.Models
         /// Gets or sets a customer-friendly, non-sequential order identifier.
         /// </summary>
         [Required]
-        public string CustomerOrderId { get; set; }
+        public string CustomerOrderId { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the date and time when the order was placed.
@@ -28,9 +28,8 @@ namespace EcomPlat.Data.Models
         /// <summary>
         /// Gets or sets the customer's email address.
         /// </summary>
-        [Required]
         [EmailAddress]
-        public string CustomerEmail { get; set; }
+        public string? CustomerEmail { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the sale price of the order, which is the billed amount before any shipping or additional fees.

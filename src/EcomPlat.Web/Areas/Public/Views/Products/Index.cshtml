@@ -96,9 +96,12 @@
         {
         new SelectListItem { Value = "", Text = "Default", Selected = string.IsNullOrEmpty(sortOrder) },
         new SelectListItem { Value = "priceAsc", Text = "Price: Low to High", Selected = sortOrder == "priceAsc" },
-        new SelectListItem { Value = "priceDesc", Text = "Price: High to Low", Selected = sortOrder == "priceDesc" }
+        new SelectListItem { Value = "priceDesc", Text = "Price: High to Low", Selected = sortOrder == "priceDesc" },
+        new SelectListItem { Value = "weightAsc", Text = "Weight: Low to High", Selected = sortOrder == "weightAsc" },
+        new SelectListItem { Value = "weightDesc", Text = "Weight: High to Low", Selected = sortOrder == "weightDesc" }
         };
         }
+
         <form method="get"
               asp-area="Public"
               asp-controller="Products"

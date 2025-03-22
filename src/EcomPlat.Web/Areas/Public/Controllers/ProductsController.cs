@@ -91,22 +91,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             }
 
             // Apply sorting
-            if (string.IsNullOrWhiteSpace(sortOrder) || sortOrder == "name")
-            {
-                query = query.OrderBy(p => p.Name);
-            }
-            else if (sortOrder == "priceAsc")
-            {
-                query = query.OrderBy(p => p.Price);
-            }
-            else if (sortOrder == "priceDesc")
-            {
-                query = query.OrderByDescending(p => p.Price);
-            }
-            else
-            {
-                query = query.OrderBy(p => p.Name);
-            }
+            query = SortQuery(sortOrder, query);
 
             // Pagination
             int totalProducts = await query.CountAsync();
@@ -138,7 +123,6 @@ namespace EcomPlat.Web.Areas.Public.Controllers
 
             return this.View("Index", products);
         }
-
 
         [HttpGet("/product/{productKey}")]
         public async Task<IActionResult> DetailsByKey(string productKey)
@@ -175,5 +159,31 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             string blobPrefix = blobSetting?.Content?.TrimEnd('/') ?? "";
             return (cdnPrefix, blobPrefix);
         }
+
+        private static IQueryable<Data.Models.Product> SortQuery(string sortOrder, IQueryable<Data.Models.Product> query)
+        {
+            switch (sortOrder)
+            {
+                case "priceAsc":
+                    query = query.OrderBy(p => p.Price);
+                    break;
+                case "priceDesc":
+                    query = query.OrderByDescending(p => p.Price);
+                    break;
+                case "weightAsc":
+                    query = query.OrderBy(p => p.ProductWeightOunces);
+                    break;
+                case "weightDesc":
+                    query = query.OrderByDescending(p => p.ProductWeightOunces);
+                    break;
+                case "name":
+                default:
+                    query = query.OrderBy(p => p.Name);
+                    break;
+            }
+
+            return query;
+        }
+
     }
 }

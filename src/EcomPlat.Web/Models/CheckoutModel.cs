@@ -1,7 +1,10 @@
-﻿namespace EcomPlat.Web.Models
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+
+namespace EcomPlat.Web.Models
 {
     public class CheckoutModel
     {
-        public string Email { get; set; }
+        [ValidateNever]
+        public string Email { get; set; } = string.Empty;
     }
 }

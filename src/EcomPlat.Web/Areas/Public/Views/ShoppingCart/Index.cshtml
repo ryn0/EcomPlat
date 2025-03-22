@@ -49,8 +49,7 @@
                         <a asp-area="Public"
                            asp-controller="Products"
                            asp-action="DetailsByKey"
-                           asp-route-productKey="@item.Product.ProductKey"
-                           class="btn btn-primary btn-sm">
+                           asp-route-productKey="@item.Product.ProductKey">
                             @if (smallImage != null)
                             {
                                 <img src="@smallImage.ImageUrl" alt="@item.Product.Name" style="width:60px; height:60px; object-fit:cover;" />

@@ -1,12 +1,15 @@
 ﻿using EcomPlat.Data.Models;
 using EcomPlat.Data.Models.BaseModels;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 
 namespace EcomPlat.Data.DbContextInfo
 {
     public class ApplicationDbContext : ApplicationBaseContext<ApplicationDbContext>, IApplicationDbContext
     {
+        private const string SizeOfPriceDecimal = "decimal(18,2)";
+        private const string SizeOfWeightDecimal = "decimal(28,8)";
+        private const string SizeOfReviewDecimal = "decimal(3,2)";
+
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
@@ -24,6 +27,7 @@ namespace EcomPlat.Data.DbContextInfo
         public DbSet<Order> Orders { get; set;  }
         public DbSet<ProductImage> ProductImages { get; set;  }
         public DbSet<ProductInventory> ProductInventories { get; set;  }
+        public DbSet<ProductReview> ProductReviews { get; set; }
         public DbSet<Product> Products { get; set;  }
         public DbSet<ShoppingCartItem> ShoppingCartItems { get; set;  }
         public DbSet<ShoppingCart> ShoppingCarts { get; set;  }
@@ -46,9 +50,6 @@ namespace EcomPlat.Data.DbContextInfo
             return base.SaveChangesAsync(cancellationToken);
         }
 
-        private const string SizeOfPriceDecimal = "decimal(18,2)";
-        private const string SizeOfWeightDecimal = "decimal(28,8)";
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -60,7 +61,6 @@ namespace EcomPlat.Data.DbContextInfo
                 .HasForeignKey(p => p.SubcategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            
             // Order decimal properties
             modelBuilder.Entity<Order>(entity =>
             {
@@ -93,6 +93,9 @@ namespace EcomPlat.Data.DbContextInfo
             {
                 entity.Property(e => e.UnitPrice)
                       .HasColumnType(SizeOfPriceDecimal);
+
+                entity.Property(e => e.TotalPrice)
+                       .HasColumnType(SizeOfPriceDecimal);
             });
 
 
@@ -120,6 +123,9 @@ namespace EcomPlat.Data.DbContextInfo
 
                 entity.Property(e => e.LengthInches)
                       .HasColumnType(SizeOfWeightDecimal);
+
+                entity.Property(e => e.ProductReview)
+                    .HasColumnType(SizeOfReviewDecimal);
             });
 
             // ProductInventory decimal properties

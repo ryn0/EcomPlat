@@ -4,6 +4,7 @@ using EcomPlat.Data.DbContextInfo;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EcomPlat.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250322135107_ProductReviews")]
+    partial class ProductReviews
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -594,7 +597,7 @@ namespace EcomPlat.Data.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal?>("ProductReview")
-                        .HasColumnType("decimal(3,2)");
+                        .HasColumnType("decimal(1,8)");
 
                     b.Property<decimal>("ProductWeightOunces")
                         .HasColumnType("decimal(28,8)");

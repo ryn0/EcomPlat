@@ -5,6 +5,7 @@
 @inject NowPayments.API.Interfaces.INowPaymentsService nowPaymentsService
 @inject Microsoft.Extensions.Caching.Memory.IMemoryCache memoryCache
 @inject Microsoft.AspNetCore.Http.IHttpContextAccessor httpContextAccessor
+@inject EcomPlat.Data.DbContextInfo.ApplicationDbContext dbContext
 
 @{
     ViewData["Title"] = Model.Name;
@@ -15,6 +16,14 @@
     var conversionResult = await CurrencyConversionHelper.GetConversionContextAsync(httpContextAccessor, memoryCache, nowPaymentsService);
     bool showConverted = conversionResult.showConverted;
     decimal conversionRate = conversionResult.conversionRate;
+
+
+    var approvedReviews = dbContext.ProductReviews
+        .Where(r => r.ProductId == Model.ProductId && r.IsApproved)
+        .OrderByDescending(r => r.ReviewDate)
+        .ToList();
+
+    var newReview = new EcomPlat.Data.Models.ProductReview { ProductId = Model.ProductId, Product = Model };
  
 }
 
@@ -78,7 +87,7 @@
             <dd class="col-sm-8">
                 <div class="flag-line">
                     <div class="flag-container">
-                        <img src="@(Url.Content("~/images/flags/" + Model.CountryOfOrigin.ToLower() + ".png"))"
+                        <img src="@(Url.Content(string.Format("~/images/flags/{0}.png", Model.CountryOfOrigin.ToLower())))"
                              alt="@Model.CountryOfOrigin" />
                     </div>
                     <span>@EcomPlat.Utilities.Helpers.CountryHelper.GetCountryName(Model.CountryOfOrigin)</span>
@@ -143,6 +152,63 @@
         }
     </div>
 }
+
+<hr />
+
+<h4>Customer Reviews</h4>
+@if (approvedReviews.Any())
+{
+    <ul class="list-group mb-4">
+        @foreach (var review in approvedReviews)
+        {
+            <li class="list-group-item">
+                <strong>@review.ReviewerName</strong> - <em>@review.ReviewDate.ToLocalTime().ToString("g")</em><br />
+                @review.Comment
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p>No reviews yet.</p>
+}
+
+<h4>Leave a Review</h4>
+<form asp-area="Public" asp-controller="ProductReview" asp-action="SubmitReview" method="post">
+                            @Html.AntiForgeryToken()
+    <input type="hidden" name="ProductId" value="@Model.ProductId" />
+
+    <div class="mb-3">
+        <label for="ReviewerName">Your Name</label>
+        <input type="text" class="form-control w-25" name="Author" required />
+    </div>
+
+    <div class="mb-3">
+        <label for="Rating">Rating</label>
+        <select name="Rating" class="form-select w-25" required>
+            <option value="">Select</option>
+            <option value="5">★★★★★ (5)</option>
+            <option value="4">★★★★☆ (4)</option>
+            <option value="3">★★★☆☆ (3)</option>
+            <option value="2">★★☆☆☆ (2)</option>
+            <option value="1">★☆☆☆☆ (1)</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label for="Comment">Your Review</label>
+        <textarea class="form-control w-25" name="Content" rows="4" required></textarea>
+    </div>
+    <div class="mb-3">
+    <img src="@Url.Action("CaptchaImage", "ProductReview")?t=@DateTime.Now.Ticks" alt="CAPTCHA" />
+
+
+        <input name="Captcha" type="text" placeholder="Enter CAPTCHA" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit Review</button>
+</form>
+
 
 @section Scripts {
     <script>

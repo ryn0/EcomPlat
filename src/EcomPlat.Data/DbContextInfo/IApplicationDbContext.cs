@@ -17,6 +17,7 @@ namespace EcomPlat.Data.DbContextInfo
         DbSet<InternalUsage> InternalUsages { get; set; }
         DbSet<ProductImage> ProductImages { get; set; }
         DbSet<ProductInventory> ProductInventories { get; set; }
+        DbSet<ProductReview> ProductReviews { get; set; }
         DbSet<Product> Products { get; set; }
         DbSet<ShoppingCartItem> ShoppingCartItems { get; set; }
         DbSet<ShoppingCart> ShoppingCarts { get; set; }

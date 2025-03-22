@@ -1,0 +1,35 @@
+﻿@model EcomPlat.Data.Models.ProductReview
+@{
+    ViewData["Title"] = "Submit Review";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form asp-action="SubmitReview" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="ProductId" />
+
+    <div class="mb-3">
+        <label asp-for="Rating" class="form-label"></label>
+        <select asp-for="Rating" class="form-select">
+            <option value="">Select Rating</option>
+            @for (int i = 1; i <= 5; i++)
+            {
+                <option value="@i">@i Star@(i > 1 ? "s" : "")</option>
+            }
+        </select>
+        <span asp-validation-for="Rating" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Comment" class="form-label"></label>
+        <textarea asp-for="Comment" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="Comment" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit Review</button>
+</form>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

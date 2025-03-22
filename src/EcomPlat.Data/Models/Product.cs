@@ -81,6 +81,8 @@ namespace EcomPlat.Data.Models
         /// </summary>
         public decimal LengthInches { get; set; }
 
+        public decimal? ProductReview { get; set; }
+
         /// <summary>
         /// Gets or sets the SKU (Stock Keeping Unit) for the product.
         /// </summary>

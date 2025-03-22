@@ -3,6 +3,7 @@
     public class StringConstants
     {
         public const string DateFormat = "yyyy-MM-dd";
+        public const string DateTimeFormat2 = "yyyy-MM-ddTHH:mm:ss";
         public const string CurrencyFormat = "";
         public const string AccountArea = "Account";
         public const string PublicArea = "Public";

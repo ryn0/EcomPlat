@@ -78,22 +78,24 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 .Include(p => p.Company)
                 .Where(p => p.IsAvailable);
 
-            // Apply category filtering (if provided).
-            if (!string.IsNullOrWhiteSpace(categoryKey))
-            {
-                query = query.Where(p => p.Subcategory.Category.CategoryKey == categoryKey);
-
-                if (!string.IsNullOrWhiteSpace(subCategoryKey))
-                {
-                    query = query.Where(p => p.Subcategory.SubcategoryKey == subCategoryKey);
-                }
-            }
-
-            // Apply search filter (if search term is provided)
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
+                // Bypass category/subcategory filters when searching
                 string lowerSearchTerm = searchTerm.ToLower();
                 query = query.Where(p => p.Name.ToLower().Contains(lowerSearchTerm) || p.Description.ToLower().Contains(lowerSearchTerm));
+            }
+            else
+            {
+                // Only apply category filtering if no search is being performed
+                if (!string.IsNullOrWhiteSpace(categoryKey))
+                {
+                    query = query.Where(p => p.Subcategory.Category.CategoryKey == categoryKey);
+
+                    if (!string.IsNullOrWhiteSpace(subCategoryKey))
+                    {
+                        query = query.Where(p => p.Subcategory.SubcategoryKey == subCategoryKey);
+                    }
+                }
             }
 
             // Apply sorting

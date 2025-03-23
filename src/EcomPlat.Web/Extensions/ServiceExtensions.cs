@@ -1,5 +1,5 @@
 ﻿using Azure.Storage.Blobs;
-using DirectoryManager.Web.Services.Implementations; // If needed
+using DirectoryManager.Web.Services.Implementations;
 using DirectoryManager.Web.Services.Interfaces;
 using EcomPlat.Data.Constants;
 using EcomPlat.Data.DbContextInfo;
@@ -14,12 +14,10 @@ using EcomPlat.Shipping.Services.Implementations;
 using EcomPlat.Shipping.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using NowPayments.API.Implementations;
 using NowPayments.API.Interfaces;
 using NowPayments.API.Models;
-// using any additional namespaces
 
 namespace EcomPlat.Web.Extensions
 {

@@ -60,6 +60,8 @@ app.UseCookiePolicy();
 // Session must be added before routing.
 app.UseSession();
 
+app.Use(InitSession);
+
 app.UseRouting();
 
 app.UseAuthentication();
@@ -74,3 +76,16 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+static async Task InitSession(HttpContext context, Func<Task> next)
+{
+    await context.Session.LoadAsync();
+
+    // This is what really triggers the session cookie.
+    if (string.IsNullOrEmpty(context.Session.GetString("Init")))
+    {
+        context.Session.SetString("Init", "1");
+    }
+
+    await next();
+}

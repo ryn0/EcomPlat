@@ -1,4 +1,5 @@
-﻿using EcomPlat.Data.DbContextInfo;
+﻿using DirectoryManager.Web.Services.Interfaces;
+using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Enums;
 using EcomPlat.Utilities.Helpers;
 using Microsoft.AspNetCore.Mvc;
@@ -12,10 +13,14 @@ namespace EcomPlat.Web.Areas.Public.Controllers
     {
         private const int DefaultPageSize = 50;
         private readonly ApplicationDbContext context;
+        private readonly ICacheService cacheService;
 
-        public ProductsController(ApplicationDbContext context)
+        public ProductsController(
+            ApplicationDbContext context,
+            ICacheService cacheService)
         {
             this.context = context;
+            this.cacheService = cacheService;
         }
 
         [HttpGet("")]
@@ -31,6 +36,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             {
                 page = 1;
             }
+
             if (pageSize < 1)
             {
                 pageSize = 10;
@@ -101,7 +107,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 .ToListAsync();
 
             // Rewrite image URLs for each product.
-            var config = await this.GetImageUrlConfigAsync();
+            var config = this.GetImageUrlConfig();
             foreach (var product in products)
             {
                 foreach (var image in product.Images)
@@ -139,7 +145,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 return this.NotFound();
             }
 
-            var config = await this.GetImageUrlConfigAsync();
+            var config = this.GetImageUrlConfig();
             foreach (var image in product.Images)
             {
                 image.ImageUrl = UrlRewriter.RewriteImageUrl(image.ImageUrl, config.cdnPrefix, config.blobPrefix);
@@ -147,19 +153,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
 
             return this.View("DetailsByKey", product);
         }
-
-        private async Task<(string cdnPrefix, string blobPrefix)> GetImageUrlConfigAsync()
-        {
-            var cdnSetting = await this.context.ConfigSettings
-                .FirstOrDefaultAsync(cs => cs.SiteConfigSetting == SiteConfigSetting.CdnPrefixWithProtocol);
-            var blobSetting = await this.context.ConfigSettings
-                .FirstOrDefaultAsync(cs => cs.SiteConfigSetting == SiteConfigSetting.BlobPrefix);
-
-            string cdnPrefix = cdnSetting?.Content?.TrimEnd('/') ?? "";
-            string blobPrefix = blobSetting?.Content?.TrimEnd('/') ?? "";
-            return (cdnPrefix, blobPrefix);
-        }
-
+ 
         private static IQueryable<Data.Models.Product> SortQuery(string sortOrder, IQueryable<Data.Models.Product> query)
         {
             switch (sortOrder)
@@ -185,5 +179,11 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             return query;
         }
 
+        private (string cdnPrefix, string blobPrefix) GetImageUrlConfig()
+        {
+            var cdnSetting = this.cacheService.GetSnippet(SiteConfigSetting.CdnPrefixWithProtocol);
+            var blobSetting = this.cacheService.GetSnippet(SiteConfigSetting.BlobPrefix);
+            return Converters.UrlConverters.ConvertCdnUrls(cdnSetting, blobSetting);
+        }
     }
 }

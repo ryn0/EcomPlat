@@ -1,4 +1,5 @@
-﻿using EcomPlat.Data.DbContextInfo;
+﻿using DirectoryManager.Web.Services.Interfaces;
+using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Enums;
 using EcomPlat.Data.Models;
 using EcomPlat.Utilities.Helpers;
@@ -12,10 +13,14 @@ namespace EcomPlat.Web.Areas.Public.Controllers
     public class ShoppingCartController : Controller
     {
         private readonly ApplicationDbContext context;
+        private readonly ICacheService cacheService;
 
-        public ShoppingCartController(ApplicationDbContext context)
+        public ShoppingCartController(
+            ApplicationDbContext context,
+            ICacheService cacheService)
         {
             this.context = context;
+            this.cacheService = cacheService;
         }
 
         // GET: /cart
@@ -37,7 +42,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 await this.context.SaveChangesAsync();
             }
 
-            var config = await this.GetImageUrlConfigAsync();
+            var config = this.GetImageUrlConfig();
             foreach (var product in cart.Items)
             {
                 foreach (var image in product.Product.Images)
@@ -160,19 +165,11 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             return this.RedirectToAction("Index", "ShoppingCart", new { area = "Public" });
         }
 
-        /// <summary>
-        /// Retrieves the CDN and blob URL prefixes from the ConfigSettings table.
-        /// </summary>
-        private async Task<(string cdnPrefix, string blobPrefix)> GetImageUrlConfigAsync()
+        private (string cdnPrefix, string blobPrefix) GetImageUrlConfig()
         {
-            var cdnSetting = await this.context.ConfigSettings
-                .FirstOrDefaultAsync(cs => cs.SiteConfigSetting == SiteConfigSetting.CdnPrefixWithProtocol);
-            var blobSetting = await this.context.ConfigSettings
-                .FirstOrDefaultAsync(cs => cs.SiteConfigSetting == SiteConfigSetting.BlobPrefix);
-
-            string cdnPrefix = cdnSetting?.Content?.TrimEnd('/') ?? "";
-            string blobPrefix = blobSetting?.Content?.TrimEnd('/') ?? "";
-            return (cdnPrefix, blobPrefix);
+            var cdnSetting = this.cacheService.GetSnippet(SiteConfigSetting.CdnPrefixWithProtocol);
+            var blobSetting = this.cacheService.GetSnippet(SiteConfigSetting.BlobPrefix);
+            return Converters.UrlConverters.ConvertCdnUrls(cdnSetting, blobSetting);
         }
     }
 }

@@ -70,24 +70,8 @@
                         @if (product.ProductReview != null && product.ProductReview > 0)
                         {
                             <div class="rating-line">
-                              
-                                    <span>
-                                        @{
-                                        int fullStars = (int)Math.Floor(product.ProductReview.Value);
-                                            for (int i = 1; i <= 5; i++)
-                                            {
-                                                if (i <= fullStars)
-                                                {
-                                                    @:★
-                                                }
-                                                else
-                                                {
-                                                    @:☆
-                                                }
-                                            }
-                                        }
-                                    <small class="text-muted">(@product.ProductReview?.ToString("0.0"))</small>
-                                    </span>
+
+                                @await Html.PartialAsync("_ReviewStars", product.ProductReview)
                                
                             </div>
                         }

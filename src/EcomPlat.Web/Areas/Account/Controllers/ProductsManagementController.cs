@@ -472,6 +472,10 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             existingProduct.Notes = newProduct.Notes;
             existingProduct.CreateDate = existingProduct.CreateDate;
             existingProduct.CreatedByUserId = existingProduct.CreatedByUserId;
+            existingProduct.CountryOfOrigin = newProduct.CountryOfOrigin;
+            existingProduct.ProductReview = existingProduct.ProductReview;
+            existingProduct.Company = existingProduct.Company;
+            existingProduct.PriceCurrency = newProduct.PriceCurrency;
         }
 
         /// <summary>

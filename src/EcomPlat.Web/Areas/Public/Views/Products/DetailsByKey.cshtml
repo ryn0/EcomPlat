@@ -117,29 +117,8 @@
             <dd class="col-sm-8">
                     @if (Model.ProductReview != null && Model.ProductReview > 0)
                     {
-                <span>
-                        @{
-                            int fullStars = (int)Math.Floor(Model.ProductReview.Value);
-                            for (int i = 1; i <= 5; i++)
-                            {
-                                if (i <= fullStars)
-                                {
-                                    @:★
-                                }
-                                else
-                                {
-                                    @:☆
-                                }
-                            }
-                        }
-                    <small class="text-muted">(@Model.ProductReview?.ToString("0.0"))</small>
-                </span>
-                }
-                else 
-                {
-                    <i>No reviews</i>
-                }
-
+                        @await Html.PartialAsync("_ReviewStars", Model.ProductReview.Value)
+                    }
             </dd>
         </dl>
 
@@ -191,7 +170,9 @@
         @foreach (var review in approvedReviews)
         {
             <li>
-                <strong>@review.ReviewerName</strong> - <em>@review.ReviewDate.ToString(EcomPlat.Web.Constants.StringConstants.DateFormat)</em><br />
+                <strong>@review.ReviewerName</strong> - <em>@review.ReviewDate.ToString(EcomPlat.Web.Constants.StringConstants.DateFormat)</em>
+                @await Html.PartialAsync("_ReviewStars", (decimal)review.Rating)
+                <br />
                 @review.Comment
             </li>
         }

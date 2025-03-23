@@ -26,8 +26,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             if (string.IsNullOrWhiteSpace(model.Captcha) ||
                 !string.Equals(model.Captcha.Trim(), sessionCaptcha, StringComparison.OrdinalIgnoreCase))
             {
-                this.ModelState.AddModelError("Captcha", "Incorrect CAPTCHA. Please try again.");
-                return this.View(model);
+                return this.BadRequest("Incorrect CAPTCHA.Please try again.");
             }
 
             if (this.ModelState.IsValid)
@@ -45,8 +44,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 return this.RedirectToAction("Success");
             }
 
-            this.TempData["Error"] = "There was a problem submitting your review.";
-            return this.View(model);
+            return this.BadRequest("There was a problem submitting your review.");
         }
 
         [Route("productreview/success")]
@@ -60,7 +58,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
         [HttpGet]
         public IActionResult CaptchaImage()
         {
-            string captchaText = CaptchaTextHelper.GenerateCaptchaText();
+            var captchaText = CaptchaTextHelper.GenerateCaptchaText();
             this.HttpContext.Session.SetString(Constants.StringConstants.CacheKeyCaptcha, captchaText);
 
             using var bitmap = new Bitmap(120, 30);

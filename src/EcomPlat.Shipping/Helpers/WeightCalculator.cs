@@ -1,6 +1,4 @@
-﻿using System.Linq;
- 
-using EcomPlat.Shipping.Models;
+﻿using EcomPlat.Shipping.Models;
 
 namespace EcomPlat.Shipping.Helpers
 {

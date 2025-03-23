@@ -1,6 +1,5 @@
 ﻿using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Enums;
-using EcomPlat.Data.Models;
 using EcomPlat.Shipping.Services.Interfaces;
 using EcomPlat.Web.Constants;
 using Microsoft.AspNetCore.Mvc;

@@ -9,11 +9,11 @@ namespace EcomPlat.Data.Models
 
         [Required]
         [MaxLength(100)]
-        public string Name { get; set; }
+        required public string Name { get; set; }
 
         [Required]
         [MaxLength(100)]
-        public string AddressLine1 { get; set; }
+        required public string AddressLine1 { get; set; }
 
         [MaxLength(100)]
         public string? AddressLine2 { get; set; }
@@ -29,7 +29,7 @@ namespace EcomPlat.Data.Models
 
         [Required]
         [MaxLength(2)]
-        public string CountryIso { get; set; }
+        required public string CountryIso { get; set; }
 
         [MaxLength(20)]
         public string? Phone { get; set; }

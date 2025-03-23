@@ -30,7 +30,6 @@ builder.Services.AddDistributedSqlServerCache(options =>
     options.TableName = "SessionCache";
 });
 
-
 // Add session with secure settings.
 builder.Services.AddSession(options =>
 {

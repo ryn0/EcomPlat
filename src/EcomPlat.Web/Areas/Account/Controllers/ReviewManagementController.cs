@@ -1,6 +1,5 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
-using EcomPlat.Data.DbContextInfo;
+﻿using EcomPlat.Data.DbContextInfo;
+using EcomPlat.Web.Constants;
 using EcomPlat.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +12,6 @@ namespace EcomPlat.Web.Areas.Account.Controllers
     public class ReviewManagementController : Controller
     {
         private readonly ApplicationDbContext context;
-        private const int PageSize = 20;
 
         public ReviewManagementController(ApplicationDbContext context)
         {
@@ -32,15 +30,15 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             var reviews = await this.context.ProductReviews
                 .Include(r => r.Product)
                 .OrderByDescending(r => r.ReviewDate)
-                .Skip((page - 1) * PageSize)
-                .Take(PageSize)
+                .Skip((page - 1) * IntegerConstants.PageSize)
+                .Take(IntegerConstants.PageSize)
                 .ToListAsync();
 
             var model = new ProductReviewManageViewModel
             {
                 Reviews = reviews,
                 CurrentPage = page,
-                TotalPages = (int)Math.Ceiling(totalCount / (double)PageSize)
+                TotalPages = (int)Math.Ceiling(totalCount / (double)IntegerConstants.PageSize)
             };
 
             return this.View(model);
@@ -95,6 +93,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 await this.UpdateProductAverageRating(review.ProductId);
                 this.TempData["Success"] = "Review approved.";
             }
+
             return this.RedirectToAction("Index");
         }
 
@@ -110,6 +109,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 await this.UpdateProductAverageRating(productId);
                 this.TempData["Success"] = "Review deleted.";
             }
+
             return this.RedirectToAction("Index");
         }
 

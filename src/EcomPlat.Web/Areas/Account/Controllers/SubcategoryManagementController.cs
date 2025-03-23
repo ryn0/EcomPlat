@@ -40,6 +40,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
+
             var subcategory = await this.context.Subcategories
                 .Include(s => s.Category)
                 .FirstOrDefaultAsync(s => s.SubcategoryId == id);
@@ -47,6 +48,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
+
             return this.View(subcategory);
         }
 
@@ -82,11 +84,13 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
+
             var subcategory = await this.context.Subcategories.FindAsync(id);
             if (subcategory == null)
             {
                 return this.NotFound();
             }
+
             await this.PopulateCategoriesDropDownList(subcategory.CategoryId);
             return this.View(subcategory);
         }
@@ -100,6 +104,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
+
             if (this.ModelState.IsValid)
             {
                 try
@@ -120,8 +125,10 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                         throw;
                     }
                 }
+
                 return this.RedirectToAction(nameof(this.Index));
             }
+
             await this.PopulateCategoriesDropDownList(subcategory.CategoryId);
             return this.View(subcategory);
         }
@@ -137,10 +144,12 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             var subcategory = await this.context.Subcategories
                 .Include(s => s.Category)
                 .FirstOrDefaultAsync(s => s.SubcategoryId == id);
+
             if (subcategory == null)
             {
                 return this.NotFound();
             }
+
             return this.View(subcategory);
         }
 

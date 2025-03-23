@@ -46,6 +46,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
+
             return this.View(warehouse);
         }
 
@@ -67,6 +68,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 await this.context.SaveChangesAsync();
                 return this.RedirectToAction(nameof(this.Index));
             }
+
             return this.View(warehouse);
         }
 
@@ -83,6 +85,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
+
             return this.View(warehouse);
         }
 
@@ -115,8 +118,10 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                         throw;
                     }
                 }
+
                 return this.RedirectToAction(nameof(this.Index));
             }
+
             return this.View(warehouse);
         }
 
@@ -134,11 +139,13 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
+
             return this.View(warehouse);
         }
 
         // POST: /Account/WarehouseManagement/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
+        [ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
@@ -148,6 +155,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 this.context.Warehouses.Remove(warehouse);
                 await this.context.SaveChangesAsync();
             }
+
             return this.RedirectToAction(nameof(this.Index));
         }
 

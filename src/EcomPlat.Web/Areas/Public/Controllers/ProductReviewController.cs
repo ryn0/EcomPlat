@@ -1,6 +1,4 @@
-﻿using System.Drawing;
-using System.Drawing.Imaging;
-using EcomPlat.Data.DbContextInfo;
+﻿using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Models;
 using EcomPlat.Utilities.Helpers;
 using EcomPlat.Web.Models;
@@ -111,6 +109,8 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             // Encode to PNG
             using var image = SKImage.FromBitmap(bitmap);
             using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+
+            var captcha = data.ToArray();
 
             return this.File(data.ToArray(), "image/png");
         }

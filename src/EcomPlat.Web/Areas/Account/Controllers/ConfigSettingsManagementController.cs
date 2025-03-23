@@ -1,6 +1,5 @@
 ﻿using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Enums;
-using EcomPlat.Data.Migrations;
 using EcomPlat.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;

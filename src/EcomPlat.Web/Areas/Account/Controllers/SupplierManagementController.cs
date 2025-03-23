@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
-using EcomPlat.Data.DbContextInfo;
+﻿using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Models;
 using EcomPlat.Web.Constants;
 using Microsoft.AspNetCore.Authorization;
@@ -46,6 +44,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
+
             return this.View(supplier);
         }
 
@@ -67,6 +66,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 await this.context.SaveChangesAsync();
                 return this.RedirectToAction(nameof(this.Index));
             }
+
             return this.View(supplier);
         }
 
@@ -83,6 +83,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
+
             return this.View(supplier);
         }
 
@@ -115,8 +116,10 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                         throw;
                     }
                 }
+
                 return this.RedirectToAction(nameof(this.Index));
             }
+
             return this.View(supplier);
         }
 
@@ -134,6 +137,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
+
             return this.View(supplier);
         }
 
@@ -148,6 +152,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 this.context.Suppliers.Remove(supplier);
                 await this.context.SaveChangesAsync();
             }
+
             return this.RedirectToAction(nameof(this.Index));
         }
 

@@ -43,6 +43,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
+
             return this.View(category);
         }
 

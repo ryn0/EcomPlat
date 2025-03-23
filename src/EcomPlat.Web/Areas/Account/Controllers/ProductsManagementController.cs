@@ -29,7 +29,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             this.siteFilesRepository = siteFilesRepository;
         }
 
-        public async Task<IActionResult> Index(string searchQuery, int page = 1, int pageSize = 10)
+        public async Task<IActionResult> Index(string searchQuery, int page = 1, int pageSize = IntegerConstants.PageSize)
         {
             IQueryable<Product> query = this.context.Products
                 .Include(p => p.Images.Where(i => i.IsMain))
@@ -68,7 +68,6 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             return this.View(products);
         }
 
-
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -86,6 +85,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
+
             return this.View(product);
         }
 
@@ -98,7 +98,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Product product, IFormFileCollection ProductImages)
+        public async Task<IActionResult> Create(Product product, IFormFileCollection productImages)
         {
             this.ValidateProduct(product);
 
@@ -109,7 +109,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 this.context.Add(product);
                 await this.context.SaveChangesAsync();
 
-                await this.ProcessProductImageUploads(product, ProductImages);
+                await this.ProcessProductImageUploads(product, productImages);
                 return this.RedirectToAction(nameof(this.Index));
             }
 
@@ -185,13 +185,6 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             return this.View(product);
         }
 
-        private async Task PopulateDropDowns(Product product)
-        {
-            await this.PopulateSubcategoryDropDownList(product.SubcategoryId);
-            await this.PopulateCompanyDropDownList(product.CompanyId);
-            await this.PopulateCountryDropDownList(product.CountryOfOrigin);
-        }
-
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -208,6 +201,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
+
             return this.View(product);
         }
 
@@ -238,8 +232,10 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                     await this.siteFilesRepository.DeleteFileAsync(img.ImageUrl);
                     this.context.ProductImages.Remove(img);
                 }
+
                 await this.context.SaveChangesAsync();
             }
+
             return this.RedirectToAction("Edit", new { id = productId });
         }
 
@@ -274,6 +270,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 .ToList();
 
             int order = 1;
+
             // Update images in the chosen group.
             foreach (var img in mainGroup)
             {
@@ -282,6 +279,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 img.UpdatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
                 order++;
             }
+
             // Update images in the other group.
             foreach (var img in otherGroup)
             {
@@ -333,11 +331,13 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 img.DisplayOrder = lowerGroupOrder;
             }
+
             foreach (var img in groupAboveImages)
             {
                 img.UpdatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
                 img.DisplayOrder = currentGroupOrder;
             }
+
             await this.context.SaveChangesAsync();
 
             return this.RedirectToAction("Edit", new { id = productId });
@@ -379,10 +379,12 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 img.UpdatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
                 img.DisplayOrder = higherGroupOrder;
             }
+
             foreach (var img in groupBelowImages)
             {
                 img.DisplayOrder = currentGroupOrder;
             }
+
             await this.context.SaveChangesAsync();
 
             return this.RedirectToAction("Edit", new { id = productId });
@@ -392,6 +394,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         {
             return this.context.Products.Any(e => e.ProductId == id);
         }
+
         private async Task PopulateSubcategoryDropDownList(object selectedId = null)
         {
             var subcategories = await this.context.Subcategories
@@ -432,6 +435,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         {
             // Get the dictionary of countries from the helper.
             var countries = CountryHelper.GetCountries();
+
             // Build a list of SelectListItem from the dictionary.
             var list = countries.Select(c => new SelectListItem
             {
@@ -444,7 +448,6 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             this.ViewBag.CountryOrigin = new SelectList(list, "Value", "Text", selectedId);
             await Task.CompletedTask; // For async signature compliance.
         }
-
 
         /// <summary>
         /// Updates the fields on the existing product with values from the new product.
@@ -547,6 +550,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                             productImage.CreatedByUserId = this.userManager.GetUserId(this.User) ?? string.Empty;
                             productImage.ImageGroupGuid = groupGuid;
                             productImage.IsMain = !hasMainImage;
+
                             // Add to both the context and the navigation collection.
                             this.context.ProductImages.Add(productImage);
                             product.Images.Add(productImage);
@@ -571,6 +575,13 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             }
         }
 
+        private async Task PopulateDropDowns(Product product)
+        {
+            await this.PopulateSubcategoryDropDownList(product.SubcategoryId);
+            await this.PopulateCompanyDropDownList(product.CompanyId);
+            await this.PopulateCountryDropDownList(product.CountryOfOrigin);
+        }
+
         private void ValidateProduct(Product product)
         {
             if (product.ProductWeightOunces > product.ShippingWeightOunces)
@@ -592,9 +603,11 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 currentMaxOrder = existingImages.Max(pi => pi.DisplayOrder);
             }
+
             return currentMaxOrder;
         }
-        private string ExtractProductKeyFromUrl(string input)
+
+        private string? ExtractProductKeyFromUrl(string input)
         {
             if (Uri.TryCreate(input, UriKind.Absolute, out Uri uri))
             {
@@ -605,6 +618,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                     return segments[index + 1]; // Product Key from URL
                 }
             }
+
             return null;
         }
 

@@ -9,7 +9,6 @@ namespace EcomPlat.Web.Areas.Account.Controllers
     [Area(StringConstants.AccountArea)]
     public class InternalUsageController : Controller
     {
-        private const int PageSize = 20;
         private readonly ApplicationDbContext context;
 
         public InternalUsageController(ApplicationDbContext context)
@@ -23,12 +22,12 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             var usageRecords = await this.context.InternalUsages
                 .Include(u => u.Product)
                 .OrderByDescending(u => u.UsageDate)
-                .Skip((page - 1) * PageSize)
-                .Take(PageSize)
+                .Skip((page - 1) * IntegerConstants.PageSize)
+                .Take(IntegerConstants.PageSize)
                 .ToListAsync();
 
             this.ViewData["CurrentPage"] = page;
-            this.ViewData["TotalPages"] = (int)Math.Ceiling((double)totalCount / PageSize);
+            this.ViewData["TotalPages"] = (int)Math.Ceiling((double)totalCount / IntegerConstants.PageSize);
 
             return this.View(usageRecords);
         }

@@ -470,6 +470,8 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             existingProduct.Upc = newProduct.Upc;
             existingProduct.Sku = newProduct.Sku;
             existingProduct.Notes = newProduct.Notes;
+            existingProduct.CreateDate = existingProduct.CreateDate;
+            existingProduct.CreatedByUserId = existingProduct.CreatedByUserId;
         }
 
         /// <summary>

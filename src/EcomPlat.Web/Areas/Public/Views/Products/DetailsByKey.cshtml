@@ -112,6 +112,35 @@
                 <dt class="col-sm-4">UPC</dt>
                 <dd class="col-sm-8">@Model.Upc</dd>
                 }
+
+            <dt class="col-sm-4">Rating</dt>
+            <dd class="col-sm-8">
+                    @if (Model.ProductReview != null && Model.ProductReview > 0)
+                    {
+                <span>
+                        @{
+                            int fullStars = (int)Math.Floor(Model.ProductReview.Value);
+                            for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= fullStars)
+                                {
+                                    @:★
+                                }
+                                else
+                                {
+                                    @:☆
+                                }
+                            }
+                        }
+                    <small class="text-muted">(@Model.ProductReview?.ToString("0.0"))</small>
+                </span>
+                }
+                else 
+                {
+                    <i>No reviews</i>
+                }
+
+            </dd>
         </dl>
 
         <form asp-area="Public" asp-controller="ShoppingCart" asp-action="AddToCart" method="post">
@@ -158,11 +187,11 @@
 <h4>Customer Reviews</h4>
 @if (approvedReviews.Any())
 {
-    <ul class="list-group mb-4">
+    <ul>
         @foreach (var review in approvedReviews)
         {
-            <li class="list-group-item">
-                <strong>@review.ReviewerName</strong> - <em>@review.ReviewDate.ToLocalTime().ToString("g")</em><br />
+            <li>
+                <strong>@review.ReviewerName</strong> - <em>@review.ReviewDate.ToString(EcomPlat.Web.Constants.StringConstants.DateFormat)</em><br />
                 @review.Comment
             </li>
         }

@@ -1,4 +1,6 @@
-﻿using EcomPlat.Data.DbContextInfo;
+﻿using System.Linq;
+using System.Threading.Tasks;
+using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -76,6 +78,8 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             review.IsApproved = isApproved;
 
             await this.context.SaveChangesAsync();
+            await this.UpdateProductAverageRating(review.ProductId);
+
             this.TempData["Success"] = "Review updated successfully.";
             return this.RedirectToAction("Index");
         }
@@ -88,6 +92,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 review.IsApproved = true;
                 await this.context.SaveChangesAsync();
+                await this.UpdateProductAverageRating(review.ProductId);
                 this.TempData["Success"] = "Review approved.";
             }
             return this.RedirectToAction("Index");
@@ -99,11 +104,31 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             var review = await this.context.ProductReviews.FindAsync(id);
             if (review != null)
             {
+                int productId = review.ProductId;
                 this.context.ProductReviews.Remove(review);
                 await this.context.SaveChangesAsync();
+                await this.UpdateProductAverageRating(productId);
                 this.TempData["Success"] = "Review deleted.";
             }
             return this.RedirectToAction("Index");
+        }
+
+        private async Task UpdateProductAverageRating(int productId)
+        {
+            var approvedReviews = await this.context.ProductReviews
+                .Where(r => r.ProductId == productId && r.IsApproved)
+                .ToListAsync();
+
+            if (approvedReviews.Any())
+            {
+                var average = approvedReviews.Average(r => r.Rating);
+                var product = await this.context.Products.FindAsync(productId);
+                if (product != null)
+                {
+                    product.ProductReview = (decimal?)Math.Round(average, 2);
+                    await this.context.SaveChangesAsync();
+                }
+            }
         }
     }
 }

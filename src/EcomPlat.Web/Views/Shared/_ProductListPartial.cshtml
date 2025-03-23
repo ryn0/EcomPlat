@@ -53,15 +53,48 @@
                         <div class="weight-line">
                             <p class="card-text mb-0">@product.ProductWeightOunces.ToString("F2") oz</p>
                         </div>
+ 
                     </div>
 
+                    <div class="d-flex justify-content-between align-items-center">
                     <!-- Flag row -->
                     <div class="flag-line">
                         <div class="flag-container">
                             <img src="@(Url.Content(string.Format("~/images/flags/{0}.png", product.CountryOfOrigin.ToLower())))"
                                  title="@product.CountryOfOrigin" alt="@product.CountryOfOrigin" />
                         </div>
+
+                        </div>
+
+
+                        @if (product.ProductReview != null && product.ProductReview > 0)
+                        {
+                            <div class="rating-line">
+                              
+                                    <span>
+                                        @{
+                                        int fullStars = (int)Math.Floor(product.ProductReview.Value);
+                                            for (int i = 1; i <= 5; i++)
+                                            {
+                                                if (i <= fullStars)
+                                                {
+                                                    @:★
+                                                }
+                                                else
+                                                {
+                                                    @:☆
+                                                }
+                                            }
+                                        }
+                                    <small class="text-muted">(@product.ProductReview?.ToString("0.0"))</small>
+                                    </span>
+                               
+                            </div>
+                        }
+
+
                     </div>
+
 
                     <!-- Buttons at the bottom -->
                     <div class="button-row">

@@ -155,7 +155,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
 
             return this.View("DetailsByKey", product);
         }
- 
+
         private static IQueryable<Data.Models.Product> SortQuery(string sortOrder, IQueryable<Data.Models.Product> query)
         {
             switch (sortOrder)
@@ -171,6 +171,12 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                     break;
                 case "weightDesc":
                     query = query.OrderByDescending(p => p.ProductWeightOunces);
+                    break;
+                case "productReviewDesc":
+                    query = query.OrderByDescending(p => p.ProductReview);
+                    break;
+                case "productReviewAsc":
+                    query = query.OrderBy(p => p.ProductReview);
                     break;
                 case "name":
                 default:

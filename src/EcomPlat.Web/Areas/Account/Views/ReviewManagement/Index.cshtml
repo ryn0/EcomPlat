@@ -1,0 +1,68 @@
+﻿@model ProductReviewManageViewModel
+
+@{
+    ViewData["Title"] = "Manage Product Reviews";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Reviewer</th>
+            <th>Rating</th>
+            <th>Comment</th>
+            <th>Date</th>
+            <th>Approved</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var review in Model.Reviews)
+        {
+            <tr>
+                <td>
+                    <a asp-area="Public" asp-controller="Products" asp-action="DetailsByKey" asp-route-productKey="@review.Product.ProductKey">
+                        @review.Product.Name
+                    </a>
+                </td>
+                <td>@review.ReviewerName</td>
+                <td>@review.Rating</td>
+                <td>@review.Comment</td>
+                <td>@review.ReviewDate.ToString(EcomPlat.Web.Constants.StringConstants.DateTimeFormat2)</td>
+                <td>@(review.IsApproved ? "Yes" : "No")</td>
+                <td>
+                    <form asp-action="Approve" method="post" class="d-inline">
+                        <input type="hidden" name="id" value="@review.ProductReviewId" />
+                        <button class="btn btn-sm btn-success" type="submit" @(review.IsApproved ? "disabled" : "")>Approve</button>
+                    </form>
+                    <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Are you sure?');">
+                        <input type="hidden" name="id" value="@review.ProductReviewId" />
+                        <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<nav aria-label="Page navigation">
+    <ul class="pagination">
+        @for (int i = 1; i <= Model.TotalPages; i++)
+        {
+            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                <a class="page-link" asp-action="Index" asp-route-page="@i">@i</a>
+            </li>
+        }
+    </ul>
+</nav>

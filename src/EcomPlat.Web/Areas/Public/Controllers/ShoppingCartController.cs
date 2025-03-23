@@ -49,13 +49,11 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             return this.View(cart);
         }
 
-
         // POST: /cart/add
         [HttpPost("add")]
         public async Task<IActionResult> AddToCart(int productId, int quantity = 1)
         {
             // Force session creation.
-            this.HttpContext.Session.Set("Init", new byte[] { 1 });
             string sessionId = this.HttpContext.Session.Id;
 
             // Load the product to check its stock.
@@ -158,9 +156,9 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 this.context.ShoppingCartItems.Remove(item);
                 await this.context.SaveChangesAsync();
             }
+
             return this.RedirectToAction("Index", "ShoppingCart", new { area = "Public" });
         }
-
 
         /// <summary>
         /// Retrieves the CDN and blob URL prefixes from the ConfigSettings table.

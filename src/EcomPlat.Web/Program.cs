@@ -13,9 +13,6 @@ var logger = new LoggerConfiguration()
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(logger);
 
-// Register the distributed memory cache (required for session)
-builder.Services.AddDistributedMemoryCache();
-
 // Configure cookie policy.
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {

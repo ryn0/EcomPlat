@@ -20,12 +20,12 @@ namespace EcomPlat.Web.Areas.Public.Controllers
 
         [HttpGet("")]
         public async Task<IActionResult> Index(
-       string categoryKey,
-       string subCategoryKey,
-       string searchTerm = "",
-       int page = 1,
-       int pageSize = DefaultPageSize,
-       string sortOrder = "")
+            string categoryKey,
+            string subCategoryKey,
+            string searchTerm = "",
+            int page = 1,
+            int pageSize = DefaultPageSize,
+            string sortOrder = "")
         {
             if (page < 1)
             {

@@ -180,7 +180,7 @@ else
 
     <div class="mb-3">
         <label for="ReviewerName">Your Name</label>
-        <input type="text" class="form-control w-25" name="Author" required />
+        <input type="text" class="form-control w-25" name="ReviewerName" required />
     </div>
 
     <div class="mb-3">
@@ -197,7 +197,7 @@ else
 
     <div class="mb-3">
         <label for="Comment">Your Review</label>
-        <textarea class="form-control w-25" name="Content" rows="4" required></textarea>
+        <textarea class="form-control w-25" name="Comment" rows="4" required></textarea>
     </div>
     <div class="mb-3">
     <img src="@Url.Action("CaptchaImage", "ProductReview")?t=@DateTime.Now.Ticks" alt="CAPTCHA" />

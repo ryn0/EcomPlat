@@ -2,6 +2,7 @@
 using System.Drawing.Imaging;
 using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Models;
+using EcomPlat.Utilities.Helpers;
 using EcomPlat.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,8 +24,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SubmitReview(ProductReviewModel model)
         {
-            
-            var sessionCaptcha = this.HttpContext.Session.GetString("CaptchaCode");
+            var sessionCaptcha = this.HttpContext.Session.GetString(Constants.StringConstants.CacheKeyCaptcha);
             if (string.IsNullOrWhiteSpace(model.Captcha) ||
                 !string.Equals(model.Captcha.Trim(), sessionCaptcha, StringComparison.OrdinalIgnoreCase))
             {
@@ -55,7 +55,7 @@ namespace EcomPlat.Web.Areas.Public.Controllers
             }
         }
 
-        [Authorize]
+
         [HttpGet]
         public async Task<IActionResult> Manage()
         {
@@ -64,6 +64,13 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 .OrderByDescending(r => r.ReviewDate)
                 .ToListAsync();
             return this.View(reviews);
+        }
+
+        [Route("productreview/success")]
+        [HttpGet]
+        public IActionResult Success()
+        {
+            return this.View();
         }
 
         [Authorize]
@@ -96,10 +103,9 @@ namespace EcomPlat.Web.Areas.Public.Controllers
         [HttpGet]
         public IActionResult CaptchaImage()
         {
-            this.HttpContext.Session.Set("Init", new byte[] { 1 });
-            string sessionId = this.HttpContext.Session.Id;
-            string captchaText = this.GenerateCaptchaText();
-            this.HttpContext.Session.SetString("CaptchaCode", captchaText);
+            var sessionId = this.HttpContext.Session.Id;
+            string captchaText = CaptchaTextHelper.GenerateCaptchaText();
+            this.HttpContext.Session.SetString(Constants.StringConstants.CacheKeyCaptcha, captchaText);
             using (var bitmap = new Bitmap(120, 30))
             {
                 using (var graphics = Graphics.FromImage(bitmap))
@@ -120,15 +126,5 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 }
             }
         }
-
-        // Helper method to generate a random CAPTCHA string
-        private string GenerateCaptchaText(int length = 5)
-        {
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            var random = new Random();
-            return new string(Enumerable.Repeat(chars, length)
-                .Select(s => s[random.Next(s.Length)]).ToArray());
-        }
-
     }
 }

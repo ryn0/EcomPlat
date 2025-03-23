@@ -7,10 +7,10 @@ namespace EcomPlat.Web.Models
         public int ReviewId { get; set; }
 
         [Required]
-        public string ReviewerName { get; set; }
+        public string ReviewerName { get; set; } = string.Empty;
 
         [Required]
-        public string Comment { get; set; }
+        public string Comment { get; set; } = string.Empty;
 
         [Range(1, 5)]
         public int Rating { get; set; }

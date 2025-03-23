@@ -5,6 +5,7 @@ using EcomPlat.Data.Models;
 using EcomPlat.Utilities.Helpers;
 using EcomPlat.Web.Models;
 using Microsoft.AspNetCore.Mvc;
+using SkiaSharp;
 
 namespace EcomPlat.Web.Areas.Public.Controllers
 {
@@ -35,8 +36,8 @@ namespace EcomPlat.Web.Areas.Public.Controllers
                 {
                     ProductId = model.ProductId,
                     Rating = model.Rating,
-                    ReviewerName = model.ReviewerName,
-                    Comment = model.Comment,
+                    ReviewerName = model.ReviewerName.Trim(),
+                    Comment = model.Comment.Trim(),
                     ReviewDate = DateTime.UtcNow,
                 });
                 await this.context.SaveChangesAsync();
@@ -58,18 +59,60 @@ namespace EcomPlat.Web.Areas.Public.Controllers
         [HttpGet]
         public IActionResult CaptchaImage()
         {
-            var captchaText = CaptchaTextHelper.GenerateCaptchaText();
+            var sessionId = this.HttpContext.Session.Id;
+
+            string captchaText = CaptchaTextHelper.GenerateCaptchaText();
             this.HttpContext.Session.SetString(Constants.StringConstants.CacheKeyCaptcha, captchaText);
 
-            using var bitmap = new Bitmap(120, 30);
-            using var graphics = Graphics.FromImage(bitmap);
-            graphics.Clear(Color.White);
-            using var font = new Font("Arial", 20);
-            using var brush = new SolidBrush(Color.Black);
-            graphics.DrawString(captchaText, font, brush, new PointF(10, 0));
-            using var ms = new MemoryStream();
-            bitmap.Save(ms, ImageFormat.Png);
-            return this.File(ms.ToArray(), "image/png");
+            int width = 120;
+            int height = 40;
+
+            using var bitmap = new SKBitmap(width, height);
+            using var canvas = new SKCanvas(bitmap);
+            canvas.Clear(SKColors.White);
+
+            using var typeface = SKTypeface.FromFamilyName("Arial", SKFontStyle.Bold);
+            float fontSize = 20;
+
+            using var paint = new SKPaint
+            {
+                Color = SKColors.Black,
+                IsAntialias = true,
+            };
+
+            using var font = new SKFont
+            {
+                Typeface = typeface,
+                Size = fontSize
+            };
+
+            // Measure text width using glyphs
+            var glyphs = font.GetGlyphs(captchaText);
+            var widths = font.GetGlyphWidths(glyphs);
+            float textWidth = widths.Sum();
+
+            // Measure height using font metrics
+            var metrics = font.Metrics;
+            float textHeight = metrics.Descent - metrics.Ascent;
+
+            // Calculate position
+            float x = (width - textWidth) / 2; // center horizontally
+            float y = ((height + textHeight) / 2) - metrics.Descent; // center vertically
+
+            // Draw the text
+            canvas.DrawText(
+                   text: captchaText,
+                   x: x,
+                   y: y,
+                   textAlign: SKTextAlign.Left,
+                   font: font,
+                   paint: paint);
+
+            // Encode to PNG
+            using var image = SKImage.FromBitmap(bitmap);
+            using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+
+            return this.File(data.ToArray(), "image/png");
         }
     }
 }

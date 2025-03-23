@@ -38,12 +38,12 @@
  
 		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.7" />
  
+		<PackageReference Include="SkiaSharp" Version="3.116.1" />
+ 
 		<PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
- 
-		<PackageReference Include="System.Drawing.Common" Version="9.0.3" />
 	</ItemGroup>
 
 

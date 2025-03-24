@@ -17,7 +17,7 @@ namespace EcomPlat.Web.Converters
                 Items = order.OrderItems.Select(item => new Shipping.Models.ShoppingCartItem
                 {
                     Product = new Shipping.Models.Product // Use the correct `Product` model
-                    {                     
+                    {
                         ShippingWeightOunces = item.Product?.ShippingWeightOunces ?? 0,
                         LengthInches = item.Product?.LengthInches ?? 0,
                         WidthInches = item.Product?.WidthInches ?? 0,

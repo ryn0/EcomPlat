@@ -1,13 +1,9 @@
 using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 using EcomPlat.Data.DbContextInfo;
 using EcomPlat.Data.Enums;
-using EcomPlat.Data.Models;
 using EcomPlat.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace EcomPlat.Web.Controllers
 {

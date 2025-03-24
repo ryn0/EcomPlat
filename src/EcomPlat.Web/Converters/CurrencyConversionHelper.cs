@@ -6,20 +6,23 @@ namespace EcomPlat.Web.Converters
 {
     public static class CurrencyConversionHelper
     {
+        private const Data.Enums.Currency MainCurrency = Data.Enums.Currency.USD;
+        private const int ExpirationTimeInMinutes = 5;
+
         public static async Task<(bool showConverted, decimal conversionRate, string selectedCurrency)> GetConversionContextAsync(
             IHttpContextAccessor httpContextAccessor,
             IMemoryCache memoryCache,
             INowPaymentsService nowPaymentsService)
         {
             var request = httpContextAccessor.HttpContext?.Request;
-            string selectedCurrency = request?.Cookies[StringConstants.CookieNameCurrency] ?? Data.Enums.Currency.USD.ToString();
+            string selectedCurrency = request?.Cookies[StringConstants.CookieNameCurrency] ?? MainCurrency.ToString();
 
-            bool showConverted = !selectedCurrency.Equals(Data.Enums.Currency.USD.ToString(), StringComparison.OrdinalIgnoreCase);
+            bool showConverted = !selectedCurrency.Equals(MainCurrency.ToString(), StringComparison.OrdinalIgnoreCase);
             decimal conversionRate = 1m;
 
             if (showConverted)
             {
-                string cacheKey = $"{Constants.StringConstants.CacheKeyConversion}_{selectedCurrency}";
+                string cacheKey = $"{Constants.StringConstants.CacheKeyPrefixConversion}_{selectedCurrency}";
 
                 if (!memoryCache.TryGetValue(cacheKey, out conversionRate))
                 {
@@ -27,13 +30,13 @@ namespace EcomPlat.Web.Converters
                     {
                         var estimate = await nowPaymentsService.GetEstimatedConversionAsync(
                             1m,
-                            Data.Enums.Currency.USD.ToString(),
+                            MainCurrency.ToString(),
                             selectedCurrency);
 
                         conversionRate = estimate.EstimatedAmount;
 
                         var cacheEntryOptions = new MemoryCacheEntryOptions()
-                            .SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+                            .SetAbsoluteExpiration(TimeSpan.FromMinutes(ExpirationTimeInMinutes));
 
                         memoryCache.Set(cacheKey, conversionRate, cacheEntryOptions);
                     }
@@ -42,7 +45,7 @@ namespace EcomPlat.Web.Converters
                         // If conversion fails (e.g. currency not supported), fallback to USD
                         showConverted = false;
                         conversionRate = 1m;
-                        selectedCurrency = Data.Enums.Currency.USD.ToString();
+                        selectedCurrency = MainCurrency.ToString();
                     }
                 }
             }

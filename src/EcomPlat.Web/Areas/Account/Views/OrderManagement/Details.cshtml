@@ -5,12 +5,22 @@
     ViewData["Title"] = $"Order Details - {Model.CustomerOrderId}";
 }
 
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+
 <h2>Order Details</h2>
 <p><strong>Customer Order Id:</strong> @Model.CustomerOrderId</p>
 
 <h4>Customer Info</h4>
 <p><strong>Email:</strong> @Model.CustomerEmail</p>
-<p><strong>Order Date:</strong> @Model.OrderDate.ToString("f")</p>
+<p><strong>Order Date:</strong> @Model.OrderDate.ToString(EcomPlat.Web.Constants.StringConstants.DateTimeFormat2)</p>
 <p><strong>Total:</strong> @Model.OrderTotal.ToString("C")</p>
 
 <h4>Shipping Info</h4>
@@ -42,11 +52,37 @@
 
 @if (Model.ShippingStatus == ShippingStatus.Pending)
 {
-    <form method="post" asp-action="BuyLabel" asp-route-orderId="@Model.OrderId">
+    <form method="post" asp-action="UpdateFinalWeight" asp-route-orderId="@Model.OrderId" class="row g-3 mb-3">
         @Html.AntiForgeryToken()
-        <button type="submit" class="btn btn-success">Buy Shipping Label</button>
+
+        <div class="col-auto">
+            <label for="pounds">Pounds:</label>
+            @Html.DropDownList("pounds", (List<SelectListItem>)ViewBag.PoundList, null, new { @class = "form-select" })
+        </div>
+
+        <div class="col-auto">
+            <label for="ounces">Ounces:</label>
+            @Html.DropDownList("ounces", (List<SelectListItem>)ViewBag.OunceList, null, new { @class = "form-select" })
+        </div>
+
+        <div class="col-auto align-self-end">
+            <button type="submit" class="btn btn-primary">Set Shipping Weight</button>
+        </div>
     </form>
+ 
+    int pounds = (int)(Model.ShippingWeightOunces / 16);
+    int ounces = (int)(Model.ShippingWeightOunces % 16);
+
+<p>
+    <strong>Shipping Weight:</strong> 
+    @Model.ShippingWeightOunces.ToString("F2") oz 
+    (@pounds lb @ounces oz)
+</p>
+
+
 }
+<hr />
+
 
 <h4>Shipping Label</h4>
 @if (!string.IsNullOrEmpty(Model.ShippingLabelUrl))
@@ -62,6 +98,16 @@ else
     <p>No shipping label has been generated yet.</p>
 }
 
+@if (Model.ShippingStatus == ShippingStatus.Pending)
+{
+    <form method="post" asp-action="BuyLabel" asp-route-orderId="@Model.OrderId">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-success">Buy Shipping Label</button>
+    </form>
+}
+
+
+
 @if (!string.IsNullOrEmpty(Model.ShippingLabelUrl) && Model.ShippingStatus == ShippingStatus.Pending)
 {
     <form method="post" asp-action="MarkAsShipped" asp-route-orderId="@Model.OrderId" class="mt-3">
@@ -69,6 +115,7 @@ else
         <button type="submit" class="btn btn-warning">Mark as Shipped</button>
     </form>
 }
+<hr />
 
 <h4>Items</h4>
 <table class="table">

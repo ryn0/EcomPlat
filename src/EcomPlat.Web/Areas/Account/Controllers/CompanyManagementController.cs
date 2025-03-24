@@ -34,12 +34,14 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
+
             var company = await this.context.Companies
                 .FirstOrDefaultAsync(c => c.CompanyId == id);
             if (company == null)
             {
                 return this.NotFound();
             }
+
             return this.View(company);
         }
 
@@ -62,6 +64,7 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                 await this.context.SaveChangesAsync();
                 return this.RedirectToAction(nameof(this.Index));
             }
+
             return this.View(company);
         }
 
@@ -72,11 +75,13 @@ namespace EcomPlat.Web.Areas.Account.Controllers
             {
                 return this.NotFound();
             }
+
             var company = await this.context.Companies.FindAsync(id);
             if (company == null)
             {
                 return this.NotFound();
             }
+
             return this.View(company);
         }
 
@@ -110,8 +115,10 @@ namespace EcomPlat.Web.Areas.Account.Controllers
                         throw;
                     }
                 }
+
                 return this.RedirectToAction(nameof(this.Index));
             }
+
             return this.View(company);
         }
 
@@ -132,7 +139,8 @@ namespace EcomPlat.Web.Areas.Account.Controllers
         }
 
         // POST: /Account/CompanyManagement/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
+        [ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {

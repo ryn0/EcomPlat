@@ -122,24 +122,40 @@
                     }
                     <!-- Shopping Cart Link -->
                     <ul class="navbar-nav">
+
+                        @using EcomPlat.Data.Enums
+                        @using EcomPlat.Web.Constants
+
                         <li>
                             @{
-                                var selectedCurrency = Context.Request.Cookies["currency"] ?? EcomPlat.Data.Enums.Currency.USD.ToString();
+                                var currencyCookieName = StringConstants.CookieNameCurrency;
+                                var selectedCurrency = Context.Request.Cookies[currencyCookieName] ?? Currency.USD.ToString();
+                                var allCurrencies = Enum.GetValues(typeof(Currency)).Cast<Currency>().Where(x => x != Currency.Unknown);
+
+                                var optionHtml = new System.Text.StringBuilder();
+
+                                foreach (var currency in allCurrencies)
+                                {
+                                    var isSelected = currency.ToString().Equals(selectedCurrency, StringComparison.OrdinalIgnoreCase)
+                                    ? " selected"
+                                    : string.Empty;
+
+                                    optionHtml.AppendLine($"<option value=\"{currency}\"{isSelected}>{currency}</option>");
+                                }
                             }
 
                             <select style="margin-top:5px;" id="currencySelect" class="form-select form-select-sm w-auto" onchange="setCurrencyPreference(this.value)">
-                                <option selected value="@EcomPlat.Data.Enums.Currency.USD.ToString()">@EcomPlat.Data.Enums.Currency.USD.ToString()</option>
-                                <option value="@EcomPlat.Data.Enums.Currency.XMR.ToString()">@EcomPlat.Data.Enums.Currency.XMR.ToString()</option>
+                                @Html.Raw(optionHtml.ToString())
                             </select>
 
                             <script>
                                 function setCurrencyPreference(currency) {
-                                    document.cookie = "currency=" + currency + "; path=/; max-age=86400";
-                                    location.reload(); // Refresh the page
+                                    document.cookie = "@currencyCookieName=" + currency + "; path=/; max-age=86400";
+                                    location.reload();
                                 }
 
                                 window.addEventListener("DOMContentLoaded", function () {
-                                    const match = document.cookie.match(/(?:^|;\s*)currency=([^;]+)/);
+                                    const match = document.cookie.match(/(?:^|;\s*)@currencyCookieName=([^;]+)/);
                                     const currency = match ? match[1] : null;
 
                                     const select = document.querySelector('#currencySelect');

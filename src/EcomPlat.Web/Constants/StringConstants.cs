@@ -14,5 +14,6 @@
         public const string SiteDescription = "Buy food in glass jars.";
         public const string CacheKeyConversion = "conversion_rate_xmr";
         public const string CacheKeyCaptcha = "review_captacha";
+        public const string CookieNameCurrency = "currency";
     }
 }
